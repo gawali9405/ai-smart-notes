@@ -25,7 +25,7 @@ const Landing = ({ isDark, onToggleTheme }) => {
           </span>
           <div>
             <p className="text-xs uppercase tracking-[0.4em] text-white/60">
-              Smart Notes
+              SmartGenius
             </p>
             <h1 className="text-xl font-semibold">AI Lecture Lab</h1>
           </div>

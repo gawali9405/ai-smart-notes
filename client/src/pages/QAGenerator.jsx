@@ -15,6 +15,7 @@ const QAGenerator = () => {
   const [notesError, setNotesError] = useState("");
   const [qaResults, setQaResults] = useState([]);
   const [hasGenerated, setHasGenerated] = useState(false);
+  const [selectedAnswers, setSelectedAnswers] = useState({});
 
   const normalizeOption = (option, index) => {
     if (typeof option === "string") {
@@ -77,6 +78,17 @@ const QAGenerator = () => {
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleOptionSelect = (questionKey, optionLabel, isCorrect, correctLabel) => {
+    setSelectedAnswers((prev) => ({
+      ...prev,
+      [questionKey]: {
+        selected: optionLabel,
+        isCorrect,
+        correctLabel,
+      },
+    }));
   };
 
   const results = qaResults.length ? qaResults : qaPreview;
@@ -221,6 +233,19 @@ const QAGenerator = () => {
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           {results.map((qa, cardIndex) => {
             const normalizedCorrect = qa.correctOption?.toString().trim().toLowerCase();
+            const questionKey = qa.id || `qa-${cardIndex}`;
+            const normalizedOptions =
+              Array.isArray(qa.options) && qa.options.length > 0
+                ? qa.options.map((option, optionIndex) => normalizeOption(option, optionIndex))
+                : [];
+            const correctOptionLabel =
+              normalizedOptions.find(
+                (option) =>
+                  normalizedCorrect &&
+                  (normalizedCorrect === option.label.toLowerCase() ||
+                    normalizedCorrect === option.text.toLowerCase())
+              )?.label || null;
+            const selectedInfo = selectedAnswers[questionKey];
 
             return (
               <article
@@ -233,30 +258,55 @@ const QAGenerator = () => {
                 </div>
                 <h3 className="text-lg font-semibold">{qa.question}</h3>
 
-                {Array.isArray(qa.options) && qa.options.length > 0 && (
+                {normalizedOptions.length > 0 && (
                   <ul className="space-y-2 rounded-2xl bg-white/5 p-3 text-sm">
-                    {qa.options.map((option, optionIndex) => {
-                      const normalized = normalizeOption(option, optionIndex);
-                      const optionKey = `${qa.id || cardIndex}-option-${optionIndex}`;
-                      const isCorrect =
-                        normalizedCorrect &&
-                        (normalizedCorrect === normalized.label.toLowerCase() ||
-                          normalizedCorrect === normalized.text.toLowerCase());
+                    {normalizedOptions.map((option) => {
+                      const optionKey = `${questionKey}-option-${option.label}`;
+                      const isCorrectOption = option.label === correctOptionLabel;
+                      const isSelected = selectedInfo?.selected === option.label;
+                      const showStatus = isSelected || (selectedInfo && isCorrectOption);
+                      const isCorrectSelection = isSelected && selectedInfo?.isCorrect;
+                      const isWrongSelection = isSelected && selectedInfo && !selectedInfo.isCorrect;
+                      const revealCorrect = !isSelected && selectedInfo && isCorrectOption;
+
+                      let optionClasses = "flex w-full items-start gap-2 rounded-xl border px-3 py-2 text-left";
+                      optionClasses += " border-white/10 hover:border-indigo-200/60 transition";
+
+                      if (isCorrectSelection || revealCorrect) {
+                        optionClasses += " border-emerald-300/60 bg-emerald-400/10";
+                      } else if (isWrongSelection) {
+                        optionClasses += " border-rose-300/60 bg-rose-400/10";
+                      }
 
                       return (
-                        <li
-                          key={optionKey}
-                          className={`flex items-start gap-2 rounded-xl border border-white/10 px-3 py-2 ${
-                            isCorrect ? "border-emerald-300/60 bg-emerald-400/10" : ""
-                          }`}
-                        >
-                          <span className="font-semibold text-white">{normalized.label}.</span>
-                          <span className="text-white/80">{normalized.text}</span>
-                          {isCorrect && (
-                            <span className="ml-auto text-xs font-semibold uppercase tracking-[0.2em] text-emerald-200">
-                              Correct
-                            </span>
-                          )}
+                        <li key={optionKey}>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleOptionSelect(questionKey, option.label, isCorrectOption, correctOptionLabel)
+                            }
+                            className={optionClasses}
+                          >
+                            <span className="font-semibold text-white">{option.label}.</span>
+                            <span className="text-white/80">{option.text}</span>
+                            {showStatus && (
+                              <span
+                                className={`ml-auto text-xs font-semibold uppercase tracking-[0.2em] ${
+                                  isCorrectSelection || revealCorrect
+                                    ? "text-emerald-200"
+                                    : isWrongSelection
+                                    ? "text-rose-200"
+                                    : "text-white/60"
+                                }`}
+                              >
+                                {isCorrectSelection || revealCorrect
+                                  ? isSelected
+                                    ? "Correct"
+                                    : "Correct Answer"
+                                  : "Wrong"}
+                              </span>
+                            )}
+                          </button>
                         </li>
                       );
                     })}
