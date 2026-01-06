@@ -36,17 +36,101 @@ const extractJsonFromMarkdown = (markdown) => {
   }
 };
 
+// export const generateNotes = async (req, res, next) => {
+//   try {
+//     const { youtubeUrl, summaryType = "detailed" } = req.body;
+
+//     if (!youtubeUrl) {
+//       throw new ApiError(400, "YouTube URL required");
+//     }
+
+//     const wavPath = await downloadYoutubeAudio(youtubeUrl);
+//     const transcript = await transcribeWithWhisper(wavPath);
+
+//     const model = genAI.getGenerativeModel({
+//       model: "models/gemini-flash-lite-latest",
+//     });
+
+//     const prompt = `
+// Create ${summaryType} lecture notes.
+// Return JSON in this format only:
+
+// {
+//   "notes": "",
+//   "keyPoints": [],
+//   "highlights": []
+// }
+
+// Transcript:
+// ${transcript}
+// `;
+
+//     const result = await model.generateContent(prompt);
+//     const rawText = result.response.text();
+//     console.log('Raw AI Response:', rawText); // Debug log
+
+//     await fs.remove(wavPath);
+
+//     const parsed = extractJsonFromMarkdown(rawText);
+//     console.log('Parsed JSON:', JSON.stringify(parsed, null, 2)); // Debug log
+
+//     if (!parsed) {
+//       console.error('Failed to parse JSON from response');
+//       return res.status(200).json({
+//         success: true,
+//         content: rawText,
+//         keyPoints: [],
+//         highlights: []
+//       });
+//     }
+
+//     res.status(201).json({
+//       success: true,
+//       content: parsed.notes || rawText,
+//       keyPoints: parsed.keyPoints || [],
+//       highlights: parsed.highlights || [],
+//     });
+//   } catch (err) {
+//     next(err);
+//   }
+// };
+
+
 export const generateNotes = async (req, res, next) => {
   try {
-    const { youtubeUrl, summaryType = "detailed" } = req.body;
+    const {
+      sourceType,
+      youtubeUrl,
+      text,
+      summaryType = "detailed",
+    } = req.body;
 
-    if (!youtubeUrl) {
-      throw new ApiError(400, "YouTube URL required");
+    let inputText = "";
+
+    // 🔹 TEXT SOURCE
+    if (sourceType === "text") {
+      if (!text?.trim()) {
+        throw new ApiError(400, "Text is required");
+      }
+      inputText = text;
     }
 
-    const wavPath = await downloadYoutubeAudio(youtubeUrl);
-    const transcript = await transcribeWithWhisper(wavPath);
+    // 🔹 YOUTUBE SOURCE
+    else if (sourceType === "youtube") {
+      if (!youtubeUrl) {
+        throw new ApiError(400, "YouTube URL required");
+      }
 
+      const wavPath = await downloadYoutubeAudio(youtubeUrl);
+      inputText = await transcribeWithWhisper(wavPath);
+      await fs.remove(wavPath);
+    }
+
+    else {
+      throw new ApiError(400, "Unsupported source type");
+    }
+
+    // 🔹 GEMINI CALL
     const model = genAI.getGenerativeModel({
       model: "models/gemini-flash-lite-latest",
     });
@@ -61,39 +145,27 @@ Return JSON in this format only:
   "highlights": []
 }
 
-Transcript:
-${transcript}
+Input:
+${inputText}
 `;
 
     const result = await model.generateContent(prompt);
     const rawText = result.response.text();
-    console.log('Raw AI Response:', rawText); // Debug log
-
-    await fs.remove(wavPath);
 
     const parsed = extractJsonFromMarkdown(rawText);
-    console.log('Parsed JSON:', JSON.stringify(parsed, null, 2)); // Debug log
-
-    if (!parsed) {
-      console.error('Failed to parse JSON from response');
-      return res.status(200).json({
-        success: true,
-        content: rawText,
-        keyPoints: [],
-        highlights: []
-      });
-    }
 
     res.status(201).json({
       success: true,
-      content: parsed.notes || rawText,
-      keyPoints: parsed.keyPoints || [],
-      highlights: parsed.highlights || [],
+      content: parsed?.notes || rawText,
+      keyPoints: parsed?.keyPoints || [],
+      highlights: parsed?.highlights || [],
     });
+
   } catch (err) {
     next(err);
   }
 };
+
 
 export const saveNote = async (req, res, next) => {
   try {
