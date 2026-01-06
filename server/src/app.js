@@ -45,7 +45,7 @@ app.get("/health", (_req, res) => {
   res.json({ success: true, message: "API healthy", env: env.nodeEnv });
 });
 
-app.use(notFoundHandler);
+app.use(notFoundHandler); 
 app.use(errorHandler);
 
 export default app;

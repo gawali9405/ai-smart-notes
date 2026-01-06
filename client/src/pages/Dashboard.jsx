@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowUpRight, Clock, Upload, Workflow } from "lucide-react";
 import {
   featureCards,
@@ -11,6 +11,12 @@ import IconBadge from "../components/IconBadge";
 import React from "react";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+
+  const handleUploadOptionClick = (optionId) => {
+    navigate(`/upload?source=${optionId}`, { state: { sourceType: optionId } });
+  };
+
   return (
     <div className="space-y-8">
       <section className="glass-panel rounded-[2.5rem] bg-slate-900/60 p-8 text-white">
@@ -131,7 +137,9 @@ const Dashboard = () => {
             {uploadOptions.map((option) => (
               <button
                 key={option.id}
+                type="button"
                 className="w-full rounded-3xl border border-white/10 bg-slate-900/60 p-4 text-left transition hover:border-indigo-300"
+                onClick={() => handleUploadOptionClick(option.id)}
               >
                 <p className="text-sm uppercase tracking-[0.3em] text-white/50">{option.label}</p>
                 <p className="mt-2 text-base font-semibold">{option.description}</p>

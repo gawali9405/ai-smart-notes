@@ -1,27 +1,18 @@
 import { Router } from "express";
+import multer from "multer";
 import {
   generateNotes,
   getMyNotes,
   updateSharing,
 } from "../controllers/notes.controller.js";
-import { upload } from "../middlewares/upload.js";
-import { protect } from "../middlewares/auth.js";
-import { validateRequest } from "../middlewares/validate.js";
-import { generateNotesSchema, updateShareSchema } from "../validators/notes.validator.js";
 
 const router = Router();
+const upload = multer();
 
-router.use(protect);
-
-router.post(
-  "/generate",
-  upload.single("file"),
-  validateRequest(generateNotesSchema),
-  generateNotes
-);
-
+// Handle both JSON and form-data
+router.post("/generate", upload.any(), generateNotes);
 router.get("/", getMyNotes);
-
-router.patch("/:id/share", validateRequest(updateShareSchema), updateSharing);
+router.patch("/:id/sharing", updateSharing);
 
 export default router;
+

@@ -5,9 +5,13 @@ export const successResponse = (res, { message = "Operation successful", data = 
     data,
   });
 
-export const errorResponse = (res, { message = "Something went wrong", status = 500, errors = [] }) =>
+export const errorResponse = (
+  res,
+  { message = "Something went wrong", status = 500, errors = [], code }
+) =>
   res.status(status).json({
     success: false,
     message,
     errors,
+    code,
   });

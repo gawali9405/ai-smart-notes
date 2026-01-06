@@ -32,6 +32,7 @@ export const env = {
   port: process.env.PORT || 5000,
   mongoUri: process.env.MONGO_URI || "",
   clientUrl: process.env.CLIENT_URL || "http://localhost:5173",
+  youtubeCookie: process.env.YOUTUBE_COOKIE || "",
 
   jwt: {
     secret: process.env.JWT_SECRET || "changeme",

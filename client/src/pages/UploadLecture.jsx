@@ -1,10 +1,19 @@
-import React, { useRef, useState } from "react";
-import { CheckCircle2, Link2, Loader2, RadioTower, UploadCloud, X } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  CheckCircle2,
+  Link2,
+  Loader2,
+  RadioTower,
+  UploadCloud,
+  X,
+} from "lucide-react";
 import SectionTitle from "../components/SectionTitle";
 import IconBadge from "../components/IconBadge";
 import { languages, summaryTypes, uploadOptions } from "../data/mockData";
 import { toast } from "react-hot-toast";
 import api from "../lib/api";
+import { useLocation } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
 
 const SUMMARY_LABELS = {
   short: "Short",
@@ -13,6 +22,7 @@ const SUMMARY_LABELS = {
 };
 
 const UploadLecture = () => {
+  const location = useLocation();
   const [activeOption, setActiveOption] = useState(uploadOptions[0].id);
   const [summaryType, setSummaryType] = useState(summaryTypes[0]);
   const [language, setLanguage] = useState(languages[0]);
@@ -48,6 +58,21 @@ const UploadLecture = () => {
       resetFileInput();
     }
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const sourceFromQuery = params.get("source");
+    const sourceFromState = location.state?.sourceType;
+    const nextSource = sourceFromQuery || sourceFromState;
+
+    if (
+      nextSource &&
+      nextSource !== activeOption &&
+      uploadOptions.some((option) => option.id === nextSource)
+    ) {
+      handleOptionChange(nextSource);
+    }
+  }, [location.search, location.state, activeOption]);
 
   const hydrateFileState = (nextFile) => {
     if (!nextFile) return;
@@ -139,18 +164,20 @@ const UploadLecture = () => {
     try {
       setIsGenerating(true);
       const payload = buildPayload();
+
       const { data } = await api.post("/notes/generate", payload, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
       toast.success("Notes generated successfully ✨");
-      setGeneratedNote(data?.data?.note || null);
+      setGeneratedNote(data.notes || null);
 
       if (activeOption === "text") setTextInput("");
       if (activeOption === "youtube") setYoutubeUrl("");
       if (["audio", "video"].includes(activeOption)) resetFileInput();
     } catch (error) {
-      const message = error?.response?.data?.message || "Failed to generate notes";
+      const message =
+        error?.response?.data?.message || "Failed to generate notes";
       toast.error(message);
     } finally {
       setIsGenerating(false);
@@ -167,7 +194,9 @@ const UploadLecture = () => {
 
       <form onSubmit={handleGenerate} className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6 rounded-[2.5rem] border border-white/10 bg-white/5 p-6">
-          <p className="text-sm uppercase tracking-[0.3em] text-white/60">Upload options</p>
+          <p className="text-sm uppercase tracking-[0.3em] text-white/60">
+            Upload options
+          </p>
           <div className="grid gap-4 md:grid-cols-2">
             {uploadOptions.map((option) => (
               <button
@@ -180,8 +209,12 @@ const UploadLecture = () => {
                     : "border-white/10 bg-slate-900/40 hover:border-indigo-300"
                 }`}
               >
-                <p className="text-xs uppercase tracking-[0.4em] text-white/60">{option.label}</p>
-                <p className="mt-2 text-lg font-semibold">{option.description}</p>
+                <p className="text-xs uppercase tracking-[0.4em] text-white/60">
+                  {option.label}
+                </p>
+                <p className="mt-2 text-lg font-semibold">
+                  {option.description}
+                </p>
                 <p className="text-sm text-white/60">{option.sampleName}</p>
               </button>
             ))}
@@ -209,12 +242,16 @@ const UploadLecture = () => {
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={handleDrop}
                 className={`rounded-3xl border-2 border-dashed p-6 text-center transition ${
-                  isDragging ? "border-indigo-400 bg-indigo-500/10" : "border-white/20 bg-slate-900/40"
+                  isDragging
+                    ? "border-indigo-400 bg-indigo-500/10"
+                    : "border-white/20 bg-slate-900/40"
                 }`}
               >
                 <UploadCloud className="mx-auto text-indigo-200" size={36} />
                 <p className="mt-3 text-lg font-semibold">
-                  {file ? "File ready to upload" : "Drop your lecture file here"}
+                  {file
+                    ? "File ready to upload"
+                    : "Drop your lecture file here"}
                 </p>
                 <p className="text-sm text-white/60">
                   {activeOption === "audio"
@@ -251,10 +288,14 @@ const UploadLecture = () => {
                 {file && (
                   <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-left text-sm">
                     <p className="font-semibold">{file.name}</p>
-                    <p className="text-white/60">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                    <p className="text-white/60">
+                      {(file.size / (1024 * 1024)).toFixed(2)} MB
+                    </p>
                   </div>
                 )}
-                {errors.file && <p className="mt-3 text-sm text-rose-300">{errors.file}</p>}
+                {errors.file && (
+                  <p className="mt-3 text-sm text-rose-300">{errors.file}</p>
+                )}
               </div>
             )}
 
@@ -268,12 +309,16 @@ const UploadLecture = () => {
                 </div>
                 <textarea
                   value={textInput}
-                  onChange={(e) => setTextInput(e.target.value.slice(0, MAX_TEXT_LENGTH))}
+                  onChange={(e) =>
+                    setTextInput(e.target.value.slice(0, MAX_TEXT_LENGTH))
+                  }
                   rows={6}
                   placeholder="Drop your transcript, bullet outline, or raw lecture notes here..."
                   className="mt-3 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white placeholder-white/40 focus:border-indigo-300 focus:outline-none"
                 />
-                {errors.text && <p className="mt-2 text-sm text-rose-300">{errors.text}</p>}
+                {errors.text && (
+                  <p className="mt-2 text-sm text-rose-300">{errors.text}</p>
+                )}
               </div>
             )}
 
@@ -290,8 +335,14 @@ const UploadLecture = () => {
                   placeholder="https://youtu.be/abcdef12345"
                   className="mt-3 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white placeholder-white/40 focus:border-indigo-300 focus:outline-none"
                 />
-                <p className="mt-2 text-xs text-white/50">Supports public or unlisted videos.</p>
-                {errors.youtubeUrl && <p className="mt-2 text-sm text-rose-300">{errors.youtubeUrl}</p>}
+                <p className="mt-2 text-xs text-white/50">
+                  Supports public or unlisted videos.
+                </p>
+                {errors.youtubeUrl && (
+                  <p className="mt-2 text-sm text-rose-300">
+                    {errors.youtubeUrl}
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -299,14 +350,20 @@ const UploadLecture = () => {
 
         <div className="space-y-6 rounded-[2.5rem] border border-white/10 bg-white/5 p-6">
           <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-white/50">Language</p>
+            <p className="text-xs uppercase tracking-[0.4em] text-white/50">
+              Language
+            </p>
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
               className="mt-3 w-full rounded-2xl border border-white/10 bg-slate-900/50 px-4 py-3 text-white focus:border-indigo-300 focus:outline-none"
             >
               {languages.map((lang) => (
-                <option key={lang} value={lang} className="bg-slate-900 text-white">
+                <option
+                  key={lang}
+                  value={lang}
+                  className="bg-slate-900 text-white"
+                >
                   {lang}
                 </option>
               ))}
@@ -314,7 +371,9 @@ const UploadLecture = () => {
           </div>
 
           <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-white/50">Summary type</p>
+            <p className="text-xs uppercase tracking-[0.4em] text-white/50">
+              Summary type
+            </p>
             <div className="mt-3 grid gap-3">
               {summaryTypes.map((type) => (
                 <label
@@ -339,12 +398,16 @@ const UploadLecture = () => {
           </div>
 
           <div className="rounded-3xl border border-white/10 bg-slate-900/50 p-5">
-            <p className="text-xs uppercase tracking-[0.4em] text-white/50">Status</p>
+            <p className="text-xs uppercase tracking-[0.4em] text-white/50">
+              Status
+            </p>
             <p className="mt-2 text-lg font-semibold text-white">
               {isGenerating ? "Processing…" : "Queue ready"}
             </p>
             <p className="text-sm text-white/60">
-              {isGenerating ? "Extracting content and generating notes" : "Average completion: 2 mins"}
+              {isGenerating
+                ? "Extracting content and generating notes"
+                : "Average completion: 2 mins"}
             </p>
             <div className="mt-4 grid gap-3 text-sm">
               {[
@@ -352,7 +415,10 @@ const UploadLecture = () => {
                 "Slide recognition active",
                 "Terminology matching on",
               ].map((item) => (
-                <div key={item} className="flex items-center gap-2 text-emerald-300">
+                <div
+                  key={item}
+                  className="flex items-center gap-2 text-emerald-300"
+                >
                   <RadioTower size={14} />
                   {item}
                 </div>
@@ -376,23 +442,16 @@ const UploadLecture = () => {
           </button>
 
           {generatedNote && (
-            <div className="rounded-3xl border border-white/10 bg-slate-900/50 p-5">
-              <div className="flex items-center gap-2 text-emerald-300">
+            <div className="rounded-3xl border border-white/10 bg-slate-900/50 p-6">
+              <div className="flex items-center gap-2 text-emerald-300 mb-4">
                 <CheckCircle2 size={18} />
-                <span>Notes ready from your {generatedNote.sourceType} upload</span>
+                <span>Notes generated successfully</span>
               </div>
-              <p className="mt-3 text-lg font-semibold text-white">{generatedNote.title}</p>
-              <p className="mt-2 text-sm text-white/70 whitespace-pre-line">
-                {generatedNote.content?.slice(0, 400)}
-                {generatedNote.content?.length > 400 ? "…" : ""}
-              </p>
-              {generatedNote.keyPoints?.length > 0 && (
-                <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-white/70">
-                  {generatedNote.keyPoints.slice(0, 3).map((point, index) => (
-                    <li key={`${point}-${index}`}>{point}</li>
-                  ))}
-                </ul>
-              )}
+
+              {/* ✅ wrapper gets className */}
+              <div className="prose prose-invert max-w-none">
+                <ReactMarkdown>{generatedNote}</ReactMarkdown>
+              </div>
             </div>
           )}
         </div>
@@ -408,12 +467,14 @@ const UploadLecture = () => {
           {[
             {
               title: "Ingest",
-              description: "Remove noise, detect segments, and align slides to timestamps.",
+              description:
+                "Remove noise, detect segments, and align slides to timestamps.",
               icon: "upload",
             },
             {
               title: "Understand",
-              description: "Topic clustering, glossary detection, and key frame extraction.",
+              description:
+                "Topic clustering, glossary detection, and key frame extraction.",
               icon: "spark",
             },
             {
@@ -423,7 +484,8 @@ const UploadLecture = () => {
             },
             {
               title: "Distribute",
-              description: "Notes ready for community sharing, PDF export, or LMS sync.",
+              description:
+                "Notes ready for community sharing, PDF export, or LMS sync.",
               icon: "community",
             },
           ].map((phase) => (
