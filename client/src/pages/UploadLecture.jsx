@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useContext } from "react";
+import { useAuth } from "../context/AuthContext";
 import {
   CheckCircle2,
   Link2,
@@ -101,19 +102,33 @@ const UploadLecture = () => {
     hydrateFileState(nextFile);
   };
 
+  const { user } = useAuth();
+  
   const handleSaveNotes = async () => {
     if (!generatedNote) return;
+    if (!user) {
+      toast.error("You must be logged in to save notes");
+      return;
+    }
 
     try {
       setIsSaving(true);
-      await api.post("/notes", {
+      const payload = {
         title: generatedNote.title,
         content: generatedNote.content,
+        keyPoints: generatedNote.keyPoints || [],
+        highlights: generatedNote.highlights || [],
         sourceType: generatedNote.sourceType,
         summaryType: generatedNote.summaryType,
         language: generatedNote.language,
-      });
+        user: user._id // Ensure user ID is included
+      };
+
+      console.log('Saving note with payload:', payload); // Debug log
       
+      const response = await api.post("/notes", payload);
+      console.log('Note saved successfully:', response.data); // Debug log
+
       toast.success("Notes saved successfully! 📝");
     } catch (error) {
       console.error("Error saving notes:", error);
@@ -195,7 +210,9 @@ const UploadLecture = () => {
 
       toast.success("Notes generated successfully ✨");
       setGeneratedNote({
-        content: data.notes || "",
+        content: data.content || "",
+        keyPoints: data.keyPoints || [],
+        highlights: data.highlights || [],
         title: title.trim() || `Notes ${new Date().toLocaleDateString()}`,
         sourceType: activeOption,
         summaryType,
@@ -491,14 +508,45 @@ const UploadLecture = () => {
                     Saving...
                   </>
                 ) : (
-                  'Save Notes'
+                  "Save Notes"
                 )}
               </button>
             </div>
 
             {/* ✅ wrapper gets className */}
-            <div className="prose prose-invert max-w-none">
-              <ReactMarkdown>{generatedNote.content}</ReactMarkdown>
+            <div className="space-y-6">
+              {generatedNote.content && (
+                <div className="prose prose-invert max-w-none">
+                  <h3 className="text-xl font-bold mb-4">Notes</h3>
+                  <ReactMarkdown>{generatedNote.content}</ReactMarkdown>
+                </div>
+              )}
+              
+              {generatedNote.keyPoints && generatedNote.keyPoints.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-xl font-bold mb-4">Key Points</h3>
+                  <ul className="list-disc pl-6 space-y-2">
+                    {generatedNote.keyPoints.map((point, index) => (
+                      <li key={index} className="text-white/90">
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {generatedNote.highlights && generatedNote.highlights.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-xl font-bold mb-4">Highlights</h3>
+                  <div className="grid gap-3">
+                    {generatedNote.highlights.map((highlight, index) => (
+                      <div key={index} className="bg-blue-900/30 border-l-4 border-blue-400 p-4 rounded-r">
+                        <p className="text-white/90">{highlight}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

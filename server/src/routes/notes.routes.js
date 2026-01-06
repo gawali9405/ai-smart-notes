@@ -1,6 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import {
+  deleteNotes,
   generateNotes,
   getMyNotes,
   saveNote,
@@ -18,6 +19,7 @@ router.use(protect);
 router.post("/generate", upload.any(), generateNotes);
 router.get("/", getMyNotes);
 router.post("/", saveNote);
+router.delete("/:id", deleteNotes);
 router.patch("/:id/sharing", updateSharing);
 
 export default router;
