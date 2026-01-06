@@ -14,6 +14,7 @@ import { toast } from "react-hot-toast";
 import api from "../lib/api";
 import { useLocation } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
+import ProcessingPipeline from "../components/ProcessingPipeline";
 
 const SUMMARY_LABELS = {
   short: "Short",
@@ -27,6 +28,7 @@ const UploadLecture = () => {
   const [summaryType, setSummaryType] = useState(summaryTypes[0]);
   const [language, setLanguage] = useState(languages[0]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [title, setTitle] = useState("");
   const [textInput, setTextInput] = useState("");
   const [youtubeUrl, setYoutubeUrl] = useState("");
@@ -97,6 +99,28 @@ const UploadLecture = () => {
   const handleFileChange = (event) => {
     const [nextFile] = event.target.files || [];
     hydrateFileState(nextFile);
+  };
+
+  const handleSaveNotes = async () => {
+    if (!generatedNote) return;
+
+    try {
+      setIsSaving(true);
+      await api.post("/notes", {
+        title: generatedNote.title,
+        content: generatedNote.content,
+        sourceType: generatedNote.sourceType,
+        summaryType: generatedNote.summaryType,
+        language: generatedNote.language,
+      });
+      
+      toast.success("Notes saved successfully! 📝");
+    } catch (error) {
+      console.error("Error saving notes:", error);
+      toast.error(error?.response?.data?.message || "Failed to save notes");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDrop = (event) => {
@@ -170,7 +194,13 @@ const UploadLecture = () => {
       });
 
       toast.success("Notes generated successfully ✨");
-      setGeneratedNote(data.notes || null);
+      setGeneratedNote({
+        content: data.notes || "",
+        title: title.trim() || `Notes ${new Date().toLocaleDateString()}`,
+        sourceType: activeOption,
+        summaryType,
+        language,
+      });
 
       if (activeOption === "text") setTextInput("");
       if (activeOption === "youtube") setYoutubeUrl("");
@@ -440,68 +470,41 @@ const UploadLecture = () => {
               "Generate notes"
             )}
           </button>
-
-          {generatedNote && (
-            <div className="rounded-3xl border border-white/10 bg-slate-900/50 p-6">
-              <div className="flex items-center gap-2 text-emerald-300 mb-4">
+        </div>
+      </form>
+      <div className="mt-6">
+        {generatedNote && (
+          <div className="rounded-3xl border border-white/10 bg-slate-900/50 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2 text-emerald-300">
                 <CheckCircle2 size={18} />
                 <span>Notes generated successfully</span>
               </div>
-
-              {/* ✅ wrapper gets className */}
-              <div className="prose prose-invert max-w-none">
-                <ReactMarkdown>{generatedNote}</ReactMarkdown>
-              </div>
+              <button
+                onClick={handleSaveNotes}
+                disabled={isSaving}
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-500 rounded hover:bg-emerald-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="animate-spin" size={16} />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Notes'
+                )}
+              </button>
             </div>
-          )}
-        </div>
-      </form>
 
-      <section className="rounded-[2.5rem] border border-white/10 bg-white/5 p-6">
-        <SectionTitle
-          eyebrow="Processing pipeline"
-          title="What happens after upload?"
-          description="The orchestrator runs audio extraction, transcription, slide parsing, and summary generation."
-        />
-        <div className="mt-6 grid gap-4 md:grid-cols-4">
-          {[
-            {
-              title: "Ingest",
-              description:
-                "Remove noise, detect segments, and align slides to timestamps.",
-              icon: "upload",
-            },
-            {
-              title: "Understand",
-              description:
-                "Topic clustering, glossary detection, and key frame extraction.",
-              icon: "spark",
-            },
-            {
-              title: "Summarize",
-              description: "Short, detailed, and bullet modes created at once.",
-              icon: "book",
-            },
-            {
-              title: "Distribute",
-              description:
-                "Notes ready for community sharing, PDF export, or LMS sync.",
-              icon: "community",
-            },
-          ].map((phase) => (
-            <article
-              key={phase.title}
-              className="glass-panel flex flex-col gap-4 rounded-3xl p-5 text-white"
-            >
-              <IconBadge icon={phase.icon} />
-              <div>
-                <h3 className="text-lg font-semibold">{phase.title}</h3>
-                <p className="text-sm text-white/70">{phase.description}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
+            {/* ✅ wrapper gets className */}
+            <div className="prose prose-invert max-w-none">
+              <ReactMarkdown>{generatedNote.content}</ReactMarkdown>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <ProcessingPipeline />
     </div>
   );
 };

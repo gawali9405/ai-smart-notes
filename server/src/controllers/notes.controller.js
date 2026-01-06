@@ -1,9 +1,9 @@
-
 import fs from "fs-extra";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import ApiError from "../utils/ApiError.js";
 import { downloadYoutubeAudio } from "../services/youtube.service.js";
 import { transcribeWithWhisper } from "../utils/whisper.js";
+import Note from "../models/Note.js";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -48,11 +48,48 @@ ${transcript}
   }
 };
 
-export const getMyNotes = async (_req, res) => {
-  res.json({
-    success: true,
-    notes: [],
-  });
+export const saveNote = async (req, res, next) => {
+  try {
+    const { title, content, sourceType, summaryType, language } = req.body;
+
+    if (!title || !content) {
+      throw new ApiError(400, "Title and content are required");
+    }
+
+    if (!req.user || !req.user._id) {
+      throw new ApiError(401, "Authentication required");
+    }
+
+    const note = await Note.create({
+      title,
+      content,
+      sourceType,
+      summaryType,
+      language,
+      user: req.user._id,
+    });
+
+    res.status(201).json({
+      success: true,
+      note,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getMyNotes = async (_req, res, next) => {
+  try {
+    const notes = await Note.find().sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: notes.length,
+      notes,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const updateSharing = async (req, res) => {
