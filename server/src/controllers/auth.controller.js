@@ -45,18 +45,31 @@ export const register = async (req, res) => {
   }
 };
 
+export const getMe = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id).select('-password');
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+  successResponse(res, { data: { user } });
+});
+
 export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email }).select("+password");
-  if (!user) throw new ApiError(401, "Invalid credentials");
+  
+  // 1. Find user by email and include the password field
+  const user = await User.findOne({ email }).select('+password');
+  
+  // 2. Check if user exists and password is correct
+  if (!user || !(await user.comparePassword(password))) {
+    throw new ApiError(401, 'Invalid email or password');
+  }
 
-  const isMatch = await user.comparePassword(password);
-  if (!isMatch) throw new ApiError(401, "Invalid credentials");
-
+  // 3. Generate JWT token
   const token = generateToken({ id: user._id });
 
+  // 4. Return success response with user data and token
   successResponse(res, {
-    message: "Login successful",
+    message: 'Login successful',
     data: {
       user: {
         id: user._id,

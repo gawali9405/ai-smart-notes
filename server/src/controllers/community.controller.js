@@ -13,17 +13,23 @@ export const getCommunityNotes = asyncHandler(async (_req, res) => {
 
 export const likeNote = asyncHandler(async (req, res) => {
   const note = await Note.findById(req.params.id);
-  if (!note || !note.isShared) throw new ApiError(404, "Note not found or not shared");
-
-  const alreadyLiked = note.likes.some((id) => id.equals(req.user._id));
-  if (alreadyLiked) {
-    note.likes = note.likes.filter((id) => !id.equals(req.user._id));
-  } else {
-    note.likes.push(req.user._id);
+  if (!note || !note.isShared) {
+    throw new ApiError(404, "Note not found or not shared");
   }
 
+  const userId = req.user._id;
+  const index = note.likes.findIndex((id) => id.equals(userId));
+
+  index === -1 ? note.likes.push(userId) : note.likes.splice(index, 1);
   await note.save();
-  successResponse(res, { message: "Like status updated", data: { likes: note.likes.length } });
+
+  successResponse(res, {
+    message: "Like status updated",
+    data: {
+      likesCount: note.likes.length,
+      isLiked: index === -1,
+    },
+  });
 });
 
 export const commentOnNote = asyncHandler(async (req, res) => {
@@ -31,7 +37,8 @@ export const commentOnNote = asyncHandler(async (req, res) => {
   if (!text?.trim()) throw new ApiError(400, "Comment text required");
 
   const note = await Note.findById(req.params.id);
-  if (!note || !note.isShared) throw new ApiError(404, "Note not found or not shared");
+  if (!note || !note.isShared)
+    throw new ApiError(404, "Note not found or not shared");
 
   note.comments.push({ user: req.user._id, text });
   await note.save();

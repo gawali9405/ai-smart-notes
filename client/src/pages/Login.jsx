@@ -15,6 +15,8 @@ const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const navigate = useNavigate();
+  const searchParams = new URLSearchParams(window.location.search);
+  const redirectTo = searchParams.get('redirect') || '/dashboard';
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -39,7 +41,7 @@ const Login = () => {
       });
 
       toast.success("Login successful 🎉");
-      navigate("/dashboard");
+      navigate(redirectTo);
     } catch (error) {
       toast.error(error.response?.data?.message || "Invalid credentials");
       console.error("Login error:", error);

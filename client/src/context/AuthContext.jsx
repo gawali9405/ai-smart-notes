@@ -11,15 +11,37 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
   const handleAuthSuccess = (payload) => {
-    if (payload?.token) {
+    if (!payload) return;
+    
+    // Store the token in localStorage if it exists
+    if (payload.token) {
       localStorage.setItem("token", payload.token);
     }
-    setUser(payload?.user || null);
+    
+    // Update the user state
+    if (payload.user) {
+      setUser({
+        id: payload.user.id,
+        name: payload.user.name,
+        email: payload.user.email,
+        role: payload.user.role
+      });
+    }
   };
 
   const login = async (credentials) => {
-    const { data } = await api.post("/auth/login", credentials);
-    handleAuthSuccess(data.data);
+    try {
+      const { data } = await api.post("/auth/login", credentials);
+      if (data?.data) {
+        handleAuthSuccess(data.data);
+        return data.data; // Return the data for the component to use
+      }
+      throw new Error('Invalid response from server');
+    } catch (error) {
+      console.error("Login error:", error);
+      const errorMessage = error.response?.data?.message || "Login failed. Please try again.";
+      throw new Error(errorMessage);
+    }
   };
 
   const register = async (payload) => {  
@@ -32,18 +54,33 @@ export const AuthProvider = ({ children }) => {
     navigate("/login");
   };
 
+  // Initialize auth state on mount
   useEffect(() => {
     const bootstrap = async () => {
       const token = localStorage.getItem("token");
+      
       if (!token) {
         setLoading(false);
         return;
       }
 
       try {
+        // Verify the token and get user data
         const { data } = await api.get("/auth/me");
-        setUser(data.data.user);
+        if (data?.data?.user) {
+          setUser({
+            id: data.data.user._id,
+            name: data.data.user.name,
+            email: data.data.user.email,
+            role: data.data.user.role
+          });
+        } else {
+          // If no user data is returned, clear the token
+          localStorage.removeItem("token");
+        }
       } catch (error) {
+        console.error("Auth check failed:", error);
+        // If there's an error (like 401), clear the token
         localStorage.removeItem("token");
       } finally {
         setLoading(false);
@@ -54,7 +91,14 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const value = useMemo(
-    () => ({ user, loading, login, register, logout }),
+    () => ({
+      user,
+      loading,
+      isAuthenticated: !!user,
+      login,
+      register,
+      logout,
+    }),
     [user, loading]
   );
 
