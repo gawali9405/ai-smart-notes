@@ -13,6 +13,7 @@ import MyNotes from "./pages/MyNotes";
 import Settings from "./pages/Settings";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Profile from "./pages/Profile";
 
 const App = () => {
   const [isDark, setIsDark] = useState(true);
@@ -46,6 +47,7 @@ const App = () => {
             <Route path="/community" element={<CommunityNotes />} />
             <Route path="/my-notes" element={<MyNotes />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/profile" element={<Profile />} />
           </Route>
         </Routes>
       </AuthProvider>

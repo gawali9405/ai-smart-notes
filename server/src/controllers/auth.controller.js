@@ -69,8 +69,21 @@ export const login = asyncHandler(async (req, res) => {
   });
 });
 
-export const me = asyncHandler(async (req, res) => {
+export const logout = asyncHandler(async (req, res) => {
   successResponse(res, {
-    data: { user: req.user },
+    message: "Logout successful",
+  });
+});
+
+export const profile = asyncHandler(async (req, res) => {
+  successResponse(res, {
+    data: {
+      user: {
+        id: req.user._id,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role,
+      },
+    },
   });
 });
