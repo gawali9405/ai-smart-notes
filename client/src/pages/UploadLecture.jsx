@@ -41,7 +41,7 @@ const UploadLecture = () => {
   const fileInputRef = useRef(null);
 
   const ACCEPTED_FILE_TYPES = {
-    audio: ".mp3,.wav,.aac,.m4a",
+    document: ".pdf,.docx",
     video: ".mp4,.mov,.m4v",
   };
 
@@ -57,7 +57,7 @@ const UploadLecture = () => {
   const handleOptionChange = (optionId) => {
     setActiveOption(optionId);
     setErrors({});
-    if (!["audio", "video"].includes(optionId)) {
+    if (!["document", "video"].includes(optionId)) {
       resetFileInput();
     }
   };
@@ -80,11 +80,20 @@ const UploadLecture = () => {
   const hydrateFileState = (nextFile) => {
     if (!nextFile) return;
 
-    const isAudio = activeOption === "audio";
+    const isDocument = activeOption === "document";
     const isVideo = activeOption === "video";
 
-    if (isAudio && !nextFile.type.startsWith("audio/")) {
-      setErrors((prev) => ({ ...prev, file: "Please choose an audio file." }));
+    if (
+      isDocument &&
+      ![
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ].includes(nextFile.type)
+    ) {
+      setErrors((prev) => ({
+        ...prev,
+        file: "Please upload a PDF or Word file.",
+      }));
       return;
     }
 
@@ -103,7 +112,7 @@ const UploadLecture = () => {
   };
 
   const { user } = useAuth();
-  
+
   const handleSaveNotes = async () => {
     if (!generatedNote) return;
     if (!user) {
@@ -121,13 +130,13 @@ const UploadLecture = () => {
         sourceType: generatedNote.sourceType,
         summaryType: generatedNote.summaryType,
         language: generatedNote.language,
-        user: user._id // Ensure user ID is included
+        user: user._id, // Ensure user ID is included
       };
 
-      console.log('Saving note with payload:', payload); // Debug log
-      
+      console.log("Saving note with payload:", payload); // Debug log
+
       const response = await api.post("/notes", payload);
-      console.log('Note saved successfully:', response.data); // Debug log
+      console.log("Note saved successfully:", response.data); // Debug log
 
       toast.success("Notes saved successfully! 📝");
     } catch (error) {
@@ -148,8 +157,8 @@ const UploadLecture = () => {
   const validateForm = () => {
     const nextErrors = {};
 
-    if (["audio", "video"].includes(activeOption) && !file) {
-      nextErrors.file = `Upload a ${activeOption} file to continue.`;
+    if (["document", "video"].includes(activeOption) && !file) {
+       nextErrors.file = "Upload a PDF or Word file to continue.";
     }
 
     if (activeOption === "text" && !textInput.trim()) {
@@ -179,7 +188,7 @@ const UploadLecture = () => {
       formData.append("title", title.trim());
     }
 
-    if (["audio", "video"].includes(activeOption) && file) {
+    if (["document", "video"].includes(activeOption) && file) {
       formData.append("file", file);
     }
 
@@ -221,7 +230,7 @@ const UploadLecture = () => {
 
       if (activeOption === "text") setTextInput("");
       if (activeOption === "youtube") setYoutubeUrl("");
-      if (["audio", "video"].includes(activeOption)) resetFileInput();
+      if (["document", "video"].includes(activeOption)) resetFileInput();
     } catch (error) {
       const message =
         error?.response?.data?.message || "Failed to generate notes";
@@ -236,7 +245,7 @@ const UploadLecture = () => {
       <SectionTitle
         eyebrow="Upload lecture"
         title="Send your lecture files to the AI lab"
-        description="Choose from audio, video, text, or links. The AI auto-detects chapters and speaker context."
+        description="Choose from document, video, text, or links. The AI auto-detects chapters and speaker context."
       />
 
       <form onSubmit={handleGenerate} className="grid gap-6 lg:grid-cols-3">
@@ -280,7 +289,7 @@ const UploadLecture = () => {
               className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white placeholder-white/40 focus:border-indigo-300 focus:outline-none"
             />
 
-            {["audio", "video"].includes(activeOption) && (
+            {["document", "video"].includes(activeOption) && (
               <div
                 onDragOver={(event) => {
                   event.preventDefault();
@@ -301,8 +310,8 @@ const UploadLecture = () => {
                     : "Drop your lecture file here"}
                 </p>
                 <p className="text-sm text-white/60">
-                  {activeOption === "audio"
-                    ? "Supports MP3, WAV, AAC, M4A"
+                  {activeOption === "document"
+                    ? "Supports PDF and Word documents"
                     : "Supports MP4, MOV, M4V up to 3GB"}
                 </p>
                 <div className="mt-4 flex items-center justify-center gap-3">
@@ -521,32 +530,37 @@ const UploadLecture = () => {
                   <ReactMarkdown>{generatedNote.content}</ReactMarkdown>
                 </div>
               )}
-              
-              {generatedNote.keyPoints && generatedNote.keyPoints.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="text-xl font-bold mb-4">Key Points</h3>
-                  <ul className="list-disc pl-6 space-y-2">
-                    {generatedNote.keyPoints.map((point, index) => (
-                      <li key={index} className="text-white/90">
-                        {point}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              
-              {generatedNote.highlights && generatedNote.highlights.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="text-xl font-bold mb-4">Highlights</h3>
-                  <div className="grid gap-3">
-                    {generatedNote.highlights.map((highlight, index) => (
-                      <div key={index} className="bg-blue-900/30 border-l-4 border-blue-400 p-4 rounded-r">
-                        <p className="text-white/90">{highlight}</p>
-                      </div>
-                    ))}
+
+              {generatedNote.keyPoints &&
+                generatedNote.keyPoints.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="text-xl font-bold mb-4">Key Points</h3>
+                    <ul className="list-disc pl-6 space-y-2">
+                      {generatedNote.keyPoints.map((point, index) => (
+                        <li key={index} className="text-white/90">
+                          {point}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                </div>
-              )}
+                )}
+
+              {generatedNote.highlights &&
+                generatedNote.highlights.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="text-xl font-bold mb-4">Highlights</h3>
+                    <div className="grid gap-3">
+                      {generatedNote.highlights.map((highlight, index) => (
+                        <div
+                          key={index}
+                          className="bg-blue-900/30 border-l-4 border-blue-400 p-4 rounded-r"
+                        >
+                          <p className="text-white/90">{highlight}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
             </div>
           </div>
         )}

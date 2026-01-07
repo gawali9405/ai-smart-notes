@@ -1,26 +1,29 @@
 import { Router } from "express";
-import multer from "multer";
 import {
   deleteNotes,
   generateNotes,
   getMyNotes,
-  saveNote,
-  updateSharing,
+  saveNote, 
 } from "../controllers/notes.controller.js";
 import { protect } from "../middlewares/auth.js";
+import { upload } from "../middlewares/upload.js";  
 
 const router = Router();
-const upload = multer();
 
-// Protect all routes with authentication
+// 🔐 Protect all routes
 router.use(protect);
 
-// Handle both JSON and form-data
-router.post("/generate", upload.any(), generateNotes);
-router.get("/", getMyNotes);
+// 📝 Generate notes (text | youtube | document | audio | video)
+router.post("/generate", upload.single("file"), generateNotes);
+
+// 💾 Save note
 router.post("/", saveNote);
+
+// 📄 Get my notes
+router.get("/", getMyNotes);
+
+// 🗑 Delete note
 router.delete("/:id", deleteNotes);
-router.patch("/:id/sharing", updateSharing);
+ 
 
 export default router;
-

@@ -85,10 +85,10 @@ export const progressStats = [
 
 export const uploadOptions = [
   {
-    id: "audio",
-    label: "Audio File",
-    description: "MP3, WAV, or AAC recordings",
-    sampleName: "physics-week4.mp3",
+    id: "document",
+    label: "PDF / Word",
+    description: "Upload lecture notes or documents",
+    sampleName: "lecture-notes.pdf / notes.docx",
   },
   {
     id: "video",

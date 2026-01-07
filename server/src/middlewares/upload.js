@@ -14,16 +14,19 @@ const storage = multer.diskStorage({
 
 const fileFilter = (_req, file, cb) => {
   const allowed = [
-    "audio/mpeg",
-    "audio/wav",
-    "audio/mp4",
-    "audio/x-m4a",
-    "video/mp4",
-    "video/mov",
-    "application/pdf",
-    "application/vnd.ms-powerpoint",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  ];
+  "audio/mpeg",
+  "audio/wav",
+  "audio/mp4",
+  "audio/x-m4a",
+  "video/mp4",
+  "video/mov",
+  "application/pdf",
+  "application/msword", 
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+];
+
 
   if (allowed.includes(file.mimetype)) cb(null, true);
   else cb(new Error("Unsupported file type"), false);

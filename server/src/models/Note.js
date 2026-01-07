@@ -20,7 +20,7 @@ const noteSchema = new mongoose.Schema(
     highlights: [{ type: String }],
     sourceType: {
       type: String,
-      enum: ["audio", "video", "text", "youtube", "slides"],
+      enum: ["audio", "video", "text", "youtube", "slides", "document", "pdf"], 
       default: "text",
     },
     summaryType: {
