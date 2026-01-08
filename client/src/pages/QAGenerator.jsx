@@ -17,25 +17,24 @@ const QAGenerator = () => {
   const [hasGenerated, setHasGenerated] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState({});
 
+  /* -------------------- Helpers -------------------- */
   const normalizeOption = (option, index) => {
     if (typeof option === "string") {
       return { label: String.fromCharCode(65 + index), text: option };
     }
 
-    if (option && typeof option === "object") {
+    if (typeof option === "object" && option !== null) {
       return {
         label:
           option.label ??
           option.key ??
           option.letter ??
-          option.id ??
           String.fromCharCode(65 + index),
         text:
           option.text ??
           option.value ??
           option.content ??
           option.option ??
-          option.answer ??
           "",
       };
     }
@@ -46,9 +45,10 @@ const QAGenerator = () => {
     };
   };
 
+  /* -------------------- Actions -------------------- */
   const handleGenerate = async () => {
     if (notesInput.trim().length < MIN_NOTES_LENGTH) {
-      setNotesError(`Enter at least ${MIN_NOTES_LENGTH} characters of notes.`);
+      setNotesError(`Enter at least ${MIN_NOTES_LENGTH} characters.`);
       return;
     }
 
@@ -57,44 +57,33 @@ const QAGenerator = () => {
     setHasGenerated(true);
 
     try {
-      const payload = {
+      const { data } = await api.post("/qa/generate", {
         notes: notesInput.trim(),
         questionType: selectedType,
         difficulty,
-      };
+      });
 
-      const { data } = await api.post("/qa/generate", payload);
-      const generatedItems = data?.data?.qa || [];
-      setQaResults(generatedItems);
+      const items = data?.data?.qa || [];
+      setQaResults(items);
 
-      if (generatedItems.length) {
-        toast.success("Generated fresh questions ✨");
-      } else {
-        toast(
-          "AI couldn't craft questions from that input. Try adding more detail."
-        );
-      }
-    } catch (error) {
-      const message =
-        error?.response?.data?.message || "Failed to generate questions";
-      toast.error(message);
+      items.length
+        ? toast.success("Questions generated ✨")
+        : toast("No questions generated. Add more detail.");
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Failed to generate questions"
+      );
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const handleOptionSelect = (
-    questionKey,
-    optionLabel,
-    isCorrect,
-    correctLabel
-  ) => {
+  const handleOptionSelect = (questionKey, optionLabel, isCorrect) => {
     setSelectedAnswers((prev) => ({
       ...prev,
       [questionKey]: {
         selected: optionLabel,
         isCorrect,
-        correctLabel,
       },
     }));
   };
@@ -103,56 +92,64 @@ const QAGenerator = () => {
   const showingSample = qaResults.length === 0;
   const noResultsAfterGenerate = hasGenerated && qaResults.length === 0;
 
+  /* -------------------- UI -------------------- */
   return (
-    <div className="space-y-8 text-white">
+    <div className="space-y-10 bg-white text-slate-800">
       <SectionTitle
         eyebrow="Auto Q&A"
-        title="Generate exam-ready questions from any notes"
-        description="Turn summaries into question sets for MCQ, short and long answers, with difficulty controls."
+        title="Generate exam-ready questions"
+        description="Convert notes into MCQs, short & long answers."
       />
 
+      {/* INPUT */}
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6 rounded-[2.5rem] border border-white/10 bg-white/5 p-6">
-          <p className="text-xs uppercase tracking-[0.4em] text-white/50">
-            Input notes
+        <div className="lg:col-span-2 space-y-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-xs uppercase tracking-widest text-slate-500">
+            Input Notes
           </p>
+
           <textarea
             rows={8}
-            placeholder="Paste lecture summary or pick from generated notes..."
             value={notesInput}
-            onChange={(event) => {
-              setNotesInput(event.target.value);
-              if (notesError) setNotesError("");
+            onChange={(e) => {
+              setNotesInput(e.target.value);
+              setNotesError("");
             }}
-            className="w-full rounded-3xl border border-white/10 bg-slate-900/40 p-4 text-sm text-white placeholder:text-white/40 focus:border-indigo-300 focus:outline-none"
+            placeholder="Paste your notes here..."
+            className="w-full rounded-2xl border border-slate-300 p-4 text-sm focus:border-indigo-500 focus:outline-none"
           />
-          <div className="flex items-center justify-between text-xs text-white/60">
+
+          <div className="flex justify-between text-xs text-slate-500">
             <span>Minimum {MIN_NOTES_LENGTH} characters</span>
             <span>{notesInput.length} chars</span>
           </div>
-          {notesError && <p className="text-sm text-rose-300">{notesError}</p>}
 
-          <div className="grid gap-4 md:grid-cols-2">
+          {notesError && (
+            <p className="text-sm text-rose-600">{notesError}</p>
+          )}
+
+          {/* OPTIONS */}
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Type */}
             <div>
-              <p className="text-xs uppercase tracking-[0.4em] text-white/50">
-                Question type
+              <p className="text-xs uppercase tracking-widest text-slate-500">
+                Question Type
               </p>
-              <div className="mt-3 grid gap-3">
+              <div className="mt-3 space-y-2">
                 {questionTypes.map((type) => (
                   <label
                     key={type}
-                    className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold ${
+                    className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-2 text-sm ${
                       selectedType === type
-                        ? "border-indigo-400 bg-indigo-500/20"
-                        : "border-white/10 bg-slate-900/50 hover:border-indigo-300"
+                        ? "border-indigo-500 bg-indigo-50"
+                        : "border-slate-200 hover:border-indigo-300"
                     }`}
                   >
                     <input
                       type="radio"
-                      name="questionType"
                       checked={selectedType === type}
                       onChange={() => setSelectedType(type)}
-                      className="accent-indigo-400"
+                      className="accent-indigo-600"
                     />
                     {type}
                   </label>
@@ -160,26 +157,26 @@ const QAGenerator = () => {
               </div>
             </div>
 
+            {/* Difficulty */}
             <div>
-              <p className="text-xs uppercase tracking-[0.4em] text-white/50">
+              <p className="text-xs uppercase tracking-widest text-slate-500">
                 Difficulty
               </p>
-              <div className="mt-3 grid gap-3">
+              <div className="mt-3 space-y-2">
                 {difficultyLevels.map((level) => (
                   <label
                     key={level}
-                    className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold ${
+                    className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-2 text-sm ${
                       difficulty === level
-                        ? "border-indigo-400 bg-indigo-500/20"
-                        : "border-white/10 bg-slate-900/50 hover:border-indigo-300"
+                        ? "border-indigo-500 bg-indigo-50"
+                        : "border-slate-200 hover:border-indigo-300"
                     }`}
                   >
                     <input
                       type="radio"
-                      name="difficulty"
                       checked={difficulty === level}
                       onChange={() => setDifficulty(level)}
-                      className="accent-indigo-400"
+                      className="accent-indigo-600"
                     />
                     {level}
                   </label>
@@ -189,168 +186,136 @@ const QAGenerator = () => {
           </div>
 
           <button
-            type="button"
             onClick={handleGenerate}
-            className="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3 text-base font-semibold text-slate-900 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
             disabled={isGenerating}
+            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
           >
             {isGenerating ? (
-              <Loader2 className="animate-spin" size={18} />
+              <Loader2 size={18} className="animate-spin" />
             ) : (
               <Sparkles size={18} />
             )}
-            {isGenerating ? "Generating..." : "Generate questions"}
+            {isGenerating ? "Generating..." : "Generate Questions"}
           </button>
         </div>
 
-        <div className="rounded-[2.5rem] border border-white/10 bg-white/5 p-6">
+        {/* LIBRARY */}
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <SectionTitle
             eyebrow="Library"
-            title="Saved note sets"
-            description="Choose an existing lecture summary to convert."
+            title="Saved Notes"
+            description="Choose an existing note set."
           />
-          <div className="mt-6 space-y-4 text-sm">
-            {[
-              "Neural Networks - Week 4",
-              "Behavioral Economics - Seminar",
-              "Modern Poetry - Guest lecture",
-            ].map((item) => (
-              <button
-                key={item}
-                className="w-full rounded-3xl border border-white/10 bg-slate-900/40 px-4 py-3 text-left hover:border-indigo-300"
-              >
-                {item}
-              </button>
-            ))}
+          <div className="mt-4 space-y-3">
+            {["Neural Networks", "Behavioral Economics", "Modern Poetry"].map(
+              (item) => (
+                <button
+                  key={item}
+                  className="w-full rounded-xl border border-slate-200 px-4 py-2 text-left hover:border-indigo-400"
+                >
+                  {item}
+                </button>
+              )
+            )}
           </div>
         </div>
       </div>
 
-      <section className="rounded-[2.5rem] border border-white/10 bg-white/5 p-6">
-        <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-white/70">
+      {/* RESULTS */}
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex justify-between items-center">
           <SectionTitle
             eyebrow="Results"
-            title="Preview generated Q&A"
-            description="Mix question types in one batch and export to PDF or Google Forms."
+            title="Generated Questions"
+            description="Select an answer to see feedback."
           />
-          <span className="text-xs uppercase tracking-[0.3em]">
-            {showingSample ? "Showing sample data" : "Showing AI results"}
+          <span className="text-xs uppercase tracking-widest text-slate-500">
+            {showingSample ? "Sample Data" : "AI Generated"}
           </span>
         </div>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {results.map((qa, cardIndex) => {
-            const normalizedCorrect = qa.correctOption
-              ?.toString()
-              .trim()
-              .toLowerCase();
-            const questionKey = qa.id || `qa-${cardIndex}`;
-            const normalizedOptions =
-              Array.isArray(qa.options) && qa.options.length > 0
-                ? qa.options.map((option, optionIndex) =>
-                    normalizeOption(option, optionIndex)
-                  )
-                : [];
-            const correctOptionLabel =
-              normalizedOptions.find(
-                (option) =>
-                  normalizedCorrect &&
-                  (normalizedCorrect === option.label.toLowerCase() ||
-                    normalizedCorrect === option.text.toLowerCase())
-              )?.label || null;
-            const selectedInfo = selectedAnswers[questionKey];
+        <div className="mt-6 grid gap-5 md:grid-cols-3">
+          {results.map((qa, index) => {
+            const questionKey = qa.id || `qa-${index}`;
+            const options = qa.options?.map(normalizeOption) || [];
+            const correct = qa.correctOption?.toLowerCase();
+            const selected = selectedAnswers[questionKey];
 
             return (
               <article
-                key={qa.id || `qa-${cardIndex}`}
-                className="glass-panel flex flex-col gap-3 rounded-3xl p-5 text-white"
+                key={questionKey}
+                className="space-y-3 rounded-2xl border border-slate-200 p-5 shadow-sm"
               >
-                <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em]">
-                  <span className="text-white/60">{qa.type}</span>
-                  <span className="text-indigo-200">{qa.difficulty}</span>
+                <div className="flex justify-between text-xs uppercase tracking-widest text-slate-500">
+                  <span>{qa.type}</span>
+                  <span>{qa.difficulty}</span>
                 </div>
-                <h3 className="text-lg font-semibold">{qa.question}</h3>
 
-                {normalizedOptions.length > 0 && (
-                  <ul className="space-y-2 rounded-2xl bg-white/5 p-3 text-sm">
-                    {normalizedOptions.map((option) => {
-                      const optionKey = `${questionKey}-option-${option.label}`;
-                      const isCorrectOption =
-                        option.label === correctOptionLabel;
-                      const isSelected =
-                        selectedInfo?.selected === option.label;
-                      const showStatus =
-                        isSelected || (selectedInfo && isCorrectOption);
-                      const isCorrectSelection =
-                        isSelected && selectedInfo?.isCorrect;
-                      const isWrongSelection =
-                        isSelected && selectedInfo && !selectedInfo.isCorrect;
-                      const revealCorrect =
-                        !isSelected && selectedInfo && isCorrectOption;
+                <h3 className="font-semibold">{qa.question}</h3>
 
-                      let optionClasses =
-                        "flex w-full items-start gap-2 rounded-xl border px-3 py-2 text-left";
-                      optionClasses +=
-                        " border-white/10 hover:border-indigo-200/60 transition";
+                <ul className="space-y-2">
+                  {options.map((opt) => {
+                    const isCorrect =
+                      opt.label.toLowerCase() === correct;
+                    const isSelected = selected?.selected === opt.label;
+                    const revealCorrect =
+                      selected && !isSelected && isCorrect;
 
-                      if (isCorrectSelection || revealCorrect) {
-                        optionClasses +=
-                          " border-emerald-300/60 bg-emerald-400/10";
-                      } else if (isWrongSelection) {
-                        optionClasses += " border-rose-300/60 bg-rose-400/10";
-                      }
+                    return (
+                      <li key={opt.label}>
+                        <button
+                          onClick={() =>
+                            handleOptionSelect(
+                              questionKey,
+                              opt.label,
+                              isCorrect
+                            )
+                          }
+                          className={`flex w-full gap-2 rounded-xl border px-3 py-2 text-left ${
+                            isSelected && isCorrect
+                              ? "border-emerald-400 bg-emerald-50"
+                              : isSelected
+                              ? "border-rose-400 bg-rose-50"
+                              : revealCorrect
+                              ? "border-emerald-300 bg-emerald-50"
+                              : "border-slate-200 hover:border-indigo-300"
+                          }`}
+                        >
+                          <span className="font-semibold">
+                            {opt.label}.
+                          </span>
+                          <span>{opt.text}</span>
 
-                      return (
-                        <li key={optionKey}>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleOptionSelect(
-                                questionKey,
-                                option.label,
-                                isCorrectOption,
-                                correctOptionLabel
-                              )
-                            }
-                            className={optionClasses}
-                          >
-                            <span className="font-semibold text-white">
-                              {option.label}.
+                          {(isSelected || revealCorrect) && (
+                            <span
+                              className={`ml-auto text-xs font-semibold uppercase tracking-widest ${
+                                isCorrect
+                                  ? "text-emerald-600"
+                                  : "text-rose-600"
+                              }`}
+                            >
+                              {isSelected
+                                ? isCorrect
+                                  ? "Correct"
+                                  : "Wrong"
+                                : "Correct Answer"}
                             </span>
-                            <span className="text-white/80">{option.text}</span>
-                            {showStatus && (
-                              <span
-                                className={`ml-auto text-xs font-semibold uppercase tracking-[0.2em] ${
-                                  isCorrectSelection || revealCorrect
-                                    ? "text-emerald-200"
-                                    : isWrongSelection
-                                    ? "text-rose-200"
-                                    : "text-white/60"
-                                }`}
-                              >
-                                {isCorrectSelection || revealCorrect
-                                  ? isSelected
-                                    ? "Correct"
-                                    : "Correct Answer"
-                                  : "Wrong"}
-                              </span>
-                            )}
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
 
-                <p className="text-sm text-white/70">{qa.answer}</p>
+                <p className="text-sm text-slate-600">{qa.answer}</p>
               </article>
             );
           })}
         </div>
+
         {noResultsAfterGenerate && (
-          <p className="mt-4 rounded-2xl border border-amber-300/40 bg-amber-400/10 p-4 text-sm text-amber-200">
-            We couldn't generate MCQs from the provided text. Add more detailed
-            notes or clarify the subject matter, then try again.
+          <p className="mt-6 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-700">
+            Could not generate questions. Add more detailed notes.
           </p>
         )}
       </section>

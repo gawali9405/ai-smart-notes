@@ -1,223 +1,173 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Heart, MessageCircle, X, Loader2, Sparkles, Share2 } from "lucide-react";
-import SectionTitle from "../components/SectionTitle";
-import IconBadge from "../components/IconBadge";
-import { getCommunityNotes } from "../services/community.service";
-import { toast } from "react-hot-toast";
+import React, { useEffect, useState, useRef } from "react";
+import {
+  Heart,
+  MessageCircle,
+  Share2,
+  X,
+  Loader2,
+  Sparkles,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import SectionTitle from "../components/SectionTitle";
+import { getCommunityNotes } from "../services/community.service";
 import { communityNotes as dummyNotes } from "../data/mockData";
 
 const CommunityNotes = () => {
-  const [subjectFilter, setSubjectFilter] = useState("All");
-  const [selectedNote, setSelectedNote] = useState(null);
   const [notes, setNotes] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isUsingDummyData, setIsUsingDummyData] = useState(false);
-  const [error, setError] = useState(null);
-  const hasMounted = useRef(false);
+  const [subject, setSubject] = useState("All");
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState(null);
+  const [usingSample, setUsingSample] = useState(false);
+  const mounted = useRef(false);
 
   useEffect(() => {
-    const fetchNotes = async () => {
+    const load = async () => {
       try {
-        setIsLoading(true);
-        const data = await getCommunityNotes(subjectFilter);
+        setLoading(true);
+        const data = await getCommunityNotes(subject);
 
-        if (data && data.length > 0) {
+        if (data?.length) {
           setNotes(data);
-          setIsUsingDummyData(false);
-        } else if (!hasMounted.current) {
-          // Only show dummy data on first load if no real data is available
+          setUsingSample(false);
+        } else if (!mounted.current) {
           setNotes(dummyNotes);
-          setIsUsingDummyData(true);
+          setUsingSample(true);
         }
-      } catch (err) {
-        console.error("Failed to fetch notes:", err);
-        setError("Failed to load community notes. Using sample data instead.");
+      } catch {
         setNotes(dummyNotes);
-        setIsUsingDummyData(true);
+        setUsingSample(true);
       } finally {
-        setIsLoading(false);
-        hasMounted.current = true;
+        mounted.current = true;
+        setLoading(false);
       }
     };
 
-    fetchNotes();
-  }, [subjectFilter]);
-
-  const handleSubjectChange = (newSubject) => {
-    setSubjectFilter(newSubject);
-  };
+    load();
+  }, [subject]);
 
   return (
-    <div className="space-y-8 text-white">
+    <div className="space-y-10">
       <SectionTitle
         eyebrow="Community"
         title="Explore public study vaults"
         description="Browse curated notes, remix them, and share your insights."
       />
 
-      <div className="flex flex-wrap gap-4">
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3">
         <select
-          value={subjectFilter}
-          onChange={(e) => handleSubjectChange(e.target.value)}
-          className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white focus:border-indigo-300 focus:outline-none"
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
-          <option value="All" className="bg-slate-900">
-            All subjects
-          </option>
-          {[...new Set(notes.map((note) => note.subject).filter(Boolean))].map(
-            (subject) => (
-              <option key={subject} value={subject} className="bg-slate-900">
-                {subject}
-              </option>
+          <option value="All">All subjects</option>
+          {[...new Set(notes.map((n) => n.subject).filter(Boolean))].map(
+            (s) => (
+              <option key={s}>{s}</option>
             )
           )}
         </select>
-        <button className="rounded-2xl border border-white/15 px-4 py-2 text-sm text-white hover:border-indigo-300">
-          Most liked
-        </button>
-        <button className="rounded-2xl border border-white/15 px-4 py-2 text-sm text-white hover:border-indigo-300">
+
+        <button className="rounded-xl border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:border-indigo-400">
           Trending
+        </button>
+        <button className="rounded-xl border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:border-indigo-400">
+          Most liked
         </button>
       </div>
 
-      <AnimatePresence mode="wait">
-        {isLoading ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex justify-center items-center py-12"
-          >
-            <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
-          </motion.div>
-        ) : error ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-4 px-6 rounded-xl bg-amber-900/20 text-amber-200 max-w-2xl mx-auto"
-          >
-            {error}{" "}
-            {isUsingDummyData &&
-              "(Showing sample data for demonstration purposes.)"}
-          </motion.div>
+      {/* Content */}
+      <AnimatePresence>
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+          </div>
         ) : (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
             className="grid gap-6 md:grid-cols-2"
           >
-            {notes.length === 0 ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="col-span-2 text-center py-12 text-gray-400"
+            {notes.map((note, i) => (
+              <motion.article
+                key={note._id || i}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="relative rounded-[2rem] bg-white border border-gray-200 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition"
               >
-                No notes found. Be the first to share your notes!
-              </motion.div>
-            ) : (
-              notes.map((note, index) => (
-                <motion.article
-                  key={note._id || note.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1, duration: 0.3 }}
-                  className={`glass-panel flex flex-col gap-4 rounded-[2.5rem] p-6 relative overflow-hidden ${
-                    isUsingDummyData
-                      ? "border-2 border-dashed border-amber-500/30"
-                      : ""
-                  }`}
-                >
-                  {isUsingDummyData && (
-                    <div className="absolute top-4 right-4 bg-amber-500/90 text-amber-900 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
-                      <Sparkles size={12} />
-                      <span>Sample</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-3 text-xs uppercase tracking-[0.4em] text-white/60">
-                    <IconBadge icon="book" size={18} className="size-10" />
-                    {note.subject}
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-semibold text-white">
-                      {note.title}
-                    </h3>
-                    <p className="text-sm text-white/70">
-                      {note.content || note.overview}
-                    </p>
-                  </div>
-                  <p className="text-sm text-white/60">
-                    By {note.user?.name || "Anonymous"}
-                  </p>
-                  <div className="flex items-center gap-4 text-sm text-white/70">
-                    <span className="inline-flex items-center gap-2 cursor-pointer">
-                      <Heart size={16} className="text-rose-300" />{" "}
-                      {note.likes?.length || 120}
-                    </span>
-                    <span className="inline-flex items-center gap-2 cursor-pointer">
-                      <MessageCircle size={16} className="text-emerald-300" />{" "}
-                      {note.comments?.length || 40}
-                    </span>
-                    <span className="inline-flex items-center gap-2 cursor-pointer">
-                      <Share2 size={16} className="text-emerald-300" />{" "}
-                      {note.shares?.length || 542}
-                    </span>
-                    <button
-                      className="ms-auto rounded-full border border-white/15 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white hover:border-indigo-300"
-                      onClick={() => setSelectedNote(note)}
-                    >
-                      View full note
-                    </button>
-                  </div>
-                </motion.article>
-              ))
-            )}
+                {usingSample && (
+                  <span className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-amber-300 px-3 py-1 text-xs font-semibold text-amber-900">
+                    <Sparkles size={12} /> Sample
+                  </span>
+                )}
+
+                <p className="text-xs uppercase tracking-widest text-gray-400">
+                  {note.subject}
+                </p>
+
+                <h3 className="mt-2 text-xl font-semibold text-gray-900">
+                  {note.title}
+                </h3>
+
+                <p className="mt-2 text-sm text-gray-600 line-clamp-2">
+                  {note.overview || note.content}
+                </p>
+
+                <p className="mt-3 text-sm text-gray-500">
+                  By {note.user?.name || "Anonymous"}
+                </p>
+
+                <div className="mt-5 flex items-center gap-4 text-sm text-gray-500">
+                  <span className="flex items-center gap-1 hover:text-rose-500 cursor-pointer">
+                    <Heart size={16} /> {note.likes?.length || 120}
+                  </span>
+                  <span className="flex items-center gap-1 hover:text-emerald-600 cursor-pointer">
+                    <MessageCircle size={16} /> {note.comments?.length || 40}
+                  </span>
+                  <span className="flex items-center gap-1 hover:text-indigo-600 cursor-pointer">
+                    <Share2 size={16} /> {note.shares?.length || 540}
+                  </span>
+
+                  <button
+                    onClick={() => setSelected(note)}
+                    className="ml-auto rounded-full bg-indigo-600 px-5 py-2 text-xs font-semibold uppercase tracking-wider text-white hover:bg-indigo-500"
+                  >
+                    View note
+                  </button>
+                </div>
+              </motion.article>
+            ))}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {selectedNote && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 backdrop-blur-md p-4">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2.5rem] border border-white/10 bg-slate-950/90 p-6 text-white">
-            <div className="flex items-center justify-between">
+      {/* Modal */}
+      {selected && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.4em] text-white/50">
-                  {selectedNote.subject}
+                <p className="text-xs uppercase tracking-widest text-gray-400">
+                  {selected.subject}
                 </p>
-                <h3 className="text-3xl font-semibold">{selectedNote.title}</h3>
-                <p className="text-sm text-white/60">
-                  By {selectedNote.author}
+                <h2 className="mt-1 text-2xl font-semibold text-gray-900">
+                  {selected.title}
+                </h2>
+                <p className="text-sm text-gray-600">
+                  By {selected.user?.name || "Anonymous"}
                 </p>
               </div>
               <button
-                className="rounded-full border border-white/10 p-2 text-white/70 hover:border-rose-300 hover:text-white"
-                onClick={() => setSelectedNote(null)}
+                onClick={() => setSelected(null)}
+                className="rounded-full border border-gray-300 p-2 text-gray-500 hover:border-rose-400 hover:text-rose-600"
               >
                 <X size={18} />
               </button>
             </div>
-            <div className="mt-6 space-y-4 text-sm text-white/80">
-              <p>
-                {selectedNote.overview} Dive deeper into concepts, case studies,
-                and curated references contributed by the community.
-              </p>
-              <ul className="list-disc space-y-2 pl-5">
-                <li>Key concept breakdowns with definitions and analogies.</li>
-                <li>Annotated diagrams and slide snapshots.</li>
-                <li>Embedded quiz prompts matched to sections.</li>
-                <li>Group highlights and peer comments.</li>
-              </ul>
-            </div>
-            <div className="mt-6 flex flex-wrap gap-4 text-sm">
-              {["Like", "Comment", "Bookmark", "Share"].map((action) => (
-                <button
-                  key={action}
-                  className="rounded-full border border-white/15 px-4 py-2 text-white/80 hover:border-indigo-300"
-                >
-                  {action}
-                </button>
-              ))}
+
+            <div className="mt-6 text-sm text-gray-700 leading-relaxed max-h-[60vh] overflow-y-auto">
+              {selected.content || selected.overview}
             </div>
           </div>
         </div>

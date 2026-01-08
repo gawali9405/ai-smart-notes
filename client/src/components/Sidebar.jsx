@@ -1,7 +1,25 @@
-import { GraduationCap } from "lucide-react";
-import { NavLink } from "react-router-dom";
-import IconBadge from "./IconBadge";
 import React from "react";
+import { 
+  GraduationCap,
+  LayoutGrid as Grid,
+  Upload as UploadIcon,
+  Presentation as Slides,
+  MessageSquare as Qa,
+  Users as Community,
+  Folder as FolderIcon,
+  Settings as SettingsIcon
+} from "lucide-react";
+import { NavLink } from "react-router-dom";
+
+const iconComponents = {
+  grid: Grid,
+  upload: UploadIcon,
+  slides: Slides,
+  qa: Qa,
+  community: Community,
+  folder: FolderIcon,
+  settings: SettingsIcon,
+};
 
 const resolvePath = (id) => {
   if (id === "dashboard") return "/dashboard";
@@ -11,48 +29,68 @@ const resolvePath = (id) => {
 
 const Sidebar = ({ items = [] }) => {
   return (
-    <aside className="glass-panel hidden w-72 flex-col rounded-e-3xl p-6 lg:flex">
-      <div className="flex items-center gap-3 pb-6">
-        <span className="inline-flex size-12 items-center justify-center rounded-2xl bg-indigo-500/30 text-indigo-200">
-          <GraduationCap />
-        </span>
+    <aside
+      className="hidden h-full w-72 flex-col
+                bg-white p-6 shadow-lg lg:flex"
+    >
+      {/* Brand */}
+      <div className="mb-8 flex items-center gap-3">
+        <div className="flex size-12 items-center justify-center rounded-2xl bg-indigo-100">
+          <GraduationCap className="text-indigo-600" size={22} />
+        </div>
+
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-indigo-200/90">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-gray-400">
             Smart Genius
           </p>
-          <h2 className="text-lg font-semibold text-white">Lecture Lab</h2>
+          <h2 className="text-lg font-semibold text-gray-900">
+            Lecture Lab
+          </h2>
         </div>
       </div>
 
-      <nav className="mt-4 flex-1 space-y-1">
+      {/* Navigation */}
+      <nav className="flex flex-1 flex-col gap-1">
         {items.map((item) => (
           <NavLink
             key={item.id}
             to={resolvePath(item.id)}
             className={({ isActive }) =>
-              [
-                "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition",
-                isActive
-                  ? "bg-indigo-600/90 text-white shadow-lg shadow-indigo-600/20"
-                  : "text-indigo-100/80 hover:bg-white/5 hover:text-white",
-              ].join(" ")
+              `group relative flex items-center gap-3 rounded-2xl px-4 py-3
+               text-sm font-medium transition
+               ${
+                 isActive
+                   ? "bg-indigo-50 text-indigo-700"
+                   : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+               }`
             }
           >
-            <IconBadge icon={item.icon} size={18} className="size-10" />
-            {item.label}
+            {({ isActive }) => (
+              <>
+                {/* Active indicator */}
+                {isActive && (
+                  <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r bg-indigo-600" />
+                )}
+
+                {/* Icon */}
+                <span
+                  className={`flex size-10 items-center justify-center rounded-xl transition
+                    ${
+                      isActive
+                        ? "text-indigo-600"
+                        : "text-gray-500 group-hover:text-gray-900"
+                    }`}
+                >
+                  {React.createElement(iconComponents[item.icon] || Grid, { size: 18 })}
+                </span>
+
+                {/* Label */}
+                <span className="truncate">{item.label}</span>
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
-
-      <div className="mt-6 rounded-3xl border border-indigo-300/20 bg-gradient-to-br from-indigo-500/30 to-purple-500/30 p-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.4em] text-indigo-200/90">
-          Tip
-        </p>
-        <p className="mt-3 text-sm text-white/80">
-          Upload lectures in batches to unlock lightning summaries & curated
-          flashcards.
-        </p>
-      </div>
     </aside>
   );
 };

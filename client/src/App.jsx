@@ -16,36 +16,16 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from "./pages/Profile";
 
 const App = () => {
-  const [isDark, setIsDark] = useState(true);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("light", !isDark);
-  }, [isDark]);
-
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route
-            path="/"
-            element={
-              <Landing
-                isDark={isDark}
-                onToggleTheme={() => setIsDark((prev) => !prev)}
-              />
-            }
-          />
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
           <Route element={<ProtectedRoute />}>
-            <Route
-              element={
-                <DashboardLayout
-                  isDark={isDark}
-                  onToggleTheme={() => setIsDark((prev) => !prev)}
-                />
-              }
+            <Route element={<DashboardLayout />}
             >
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/upload" element={<UploadLecture />} />

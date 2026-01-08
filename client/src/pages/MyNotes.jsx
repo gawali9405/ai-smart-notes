@@ -1,10 +1,10 @@
-import React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Download, Eye, Share2, Trash2 } from "lucide-react";
 import SectionTitle from "../components/SectionTitle";
 import api from "../lib/api";
 import jsPDF from "jspdf";
 import { toast } from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
 
 const MyNotes = () => {
   const [notes, setNotes] = useState([]);
@@ -28,31 +28,26 @@ const MyNotes = () => {
   }, []);
 
   const filteredNotes =
-    filter === "All" ? notes : notes.filter((note) => note.status === filter);
+    filter === "All" ? notes : notes.filter((n) => n.status === filter);
 
   const handleDelete = async (id) => {
     try {
       await api.delete(`/notes/${id}`);
-      setNotes((prev) => prev.filter((note) => note._id !== id));
+      setNotes((prev) => prev.filter((n) => n._id !== id));
       toast.success("Note deleted successfully");
-    } catch (err) {
-      console.error("Failed to delete note", err);
+    } catch {
+      toast.error("Failed to delete note");
     }
   };
 
   const handleDownload = (note) => {
     const pdf = new jsPDF();
-
-    pdf.setFont("helvetica", "bold");
     pdf.setFontSize(18);
     pdf.text(note.title, 10, 20);
 
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(12);
-
     const content = note.content.replace(/```json|```/g, "");
     const lines = pdf.splitTextToSize(content, 180);
-
+    pdf.setFontSize(12);
     pdf.text(lines, 10, 35);
 
     pdf.save(`${note.title || "note"}.pdf`);
@@ -69,151 +64,190 @@ const MyNotes = () => {
     });
 
     if (navigator.share && navigator.canShare({ files: [file] })) {
-      await navigator.share({
-        title: note.title,
-        files: [file],
-      });
+      await navigator.share({ title: note.title, files: [file] });
     } else {
-      toast.error("File sharing not supported on this device");
+      toast.error("File sharing not supported");
     }
   };
 
   if (loading) {
-    return <p className="text-white">Loading notes...</p>;
+    return <p className="text-gray-500">Loading notes…</p>;
   }
 
   return (
-    <div className="space-y-8 text-white">
+    <div className="space-y-8 text-gray-900">
       <SectionTitle
         eyebrow="My notes"
         title="Your personal knowledge base"
-        description="Edit, export, or share notes to the community with a single click."
+        description="Edit, export, or share notes with a single click."
       />
 
-      <div className="flex flex-wrap gap-4 text-sm">
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-indigo-300 focus:outline-none"
-        >
-          {["All", "Draft", "Ready", "Shared"].map((status) => (
-            <option
-              key={status}
-              value={status}
-              className="bg-slate-900 text-white"
-            >
-              {status}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* Filter */}
+      <select
+        value={filter}
+        onChange={(e) => setFilter(e.target.value)}
+        className="w-40 rounded-xl border border-gray-300 bg-white px-4 py-2
+                   text-sm focus:border-indigo-500 focus:outline-none"
+      >
+        {["All", "Draft", "Ready", "Shared"].map((s) => (
+          <option key={s} value={s}>
+            {s}
+          </option>
+        ))}
+      </select>
 
       {notes.length === 0 ? (
-        <p className="text-white/60">No notes saved yet.</p>
+        <p className="text-gray-500">No notes saved yet.</p>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2">
-          {filteredNotes.map((note) => (
-            <article
+        <motion.div 
+        className="grid gap-6 md:grid-cols-2"
+        initial="hidden"
+        animate="show"
+        variants={{
+          hidden: { opacity: 0 },
+          show: {
+            opacity: 1,
+            transition: {
+              staggerChildren: 0.1
+            }
+          }
+        }}
+      >
+          {filteredNotes.map((note, index) => (
+            <motion.article
               key={note._id}
-              className="rounded-[2.5rem] border border-white/10 bg-white/5 p-6"
+              className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-lg transition-all duration-300"
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                show: { 
+                  opacity: 1, 
+                  y: 0,
+                  transition: {
+                    type: "spring",
+                    stiffness: 100,
+                    damping: 10
+                  }
+                }
+              }}
+              whileHover={{ 
+                scale: 1.02,
+                boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+              }}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.4em] text-white/50">
+                  <p className="text-xs uppercase tracking-[0.3em] text-gray-400">
                     {note.sourceType || "NOTE"}
                   </p>
-                  <h3 className="mt-2 text-2xl font-semibold text-white">
-                    {note.title}
-                  </h3>
-                  <p className="text-sm text-white/60">
+                  <h3 className="mt-2 text-xl font-semibold">{note.title}</h3>
+                  <p className="text-sm text-gray-500">
                     {new Date(note.createdAt).toLocaleDateString()}
                   </p>
                 </div>
-                <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/70">
+
+                <span className="inline-flex items-center text-xs font-medium text-gray-500">
                   #{note._id.slice(-6)}
                 </span>
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-3">
+              {/* Actions */}
+              <div className="mt-5 flex flex-wrap gap-3">
                 <button
                   onClick={() => setViewNote(note)}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm hover:border-indigo-300"
+                  className="btn-outline"
                 >
                   <Eye size={16} /> View
                 </button>
 
                 <button
                   onClick={() => handleDownload(note)}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm hover:border-indigo-300"
+                  className="btn-outline"
                 >
                   <Download size={16} /> PDF
                 </button>
 
                 <button
                   onClick={() => handleShare(note)}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm hover:border-indigo-300"
+                  className="btn-outline"
                 >
                   <Share2 size={16} /> Share
                 </button>
 
                 <button
                   onClick={() => handleDelete(note._id)}
-                  className="inline-flex items-center gap-2 rounded-full border border-rose-400/40 px-4 py-2 text-sm text-rose-200 hover:border-rose-300"
+                  className="btn-danger"
                 >
                   <Trash2 size={16} /> Delete
                 </button>
               </div>
-            </article>
+            </motion.article>
           ))}
-        </div>
+        </motion.div>
       )}
-      {viewNote && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-          <div className="w-full max-w-3xl rounded-[2rem] border border-white/10 bg-slate-900 p-6 text-white">
-            {/* Header */}
-            <div className="mb-4 flex items-center justify-between">
+
+      {/* Modal */}
+      <AnimatePresence>
+        {viewNote && (
+          <motion.div 
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <motion.div 
+              className="w-full max-w-3xl rounded-2xl bg-white p-6 shadow-2xl"
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ 
+                type: "spring",
+                damping: 25,
+                stiffness: 300
+              }}
+            >
+            <div className="mb-4 flex justify-between">
               <h2 className="text-2xl font-semibold">{viewNote.title}</h2>
               <button
                 onClick={() => setViewNote(null)}
-                className="text-white/60 hover:text-white"
+                className="text-gray-400 hover:text-gray-700"
               >
                 ✕
               </button>
             </div>
 
-            {/* Content */}
-            <div className="max-h-[70vh] overflow-y-auto rounded-xl bg-white/5 p-4 text-sm leading-relaxed">
+            <div className="max-h-[70vh] overflow-y-auto rounded-xl bg-gray-50 p-4 text-sm">
               <pre className="whitespace-pre-wrap font-sans">
                 {viewNote.content.replace(/```json|```/g, "")}
               </pre>
             </div>
 
-            {/* Actions */}
             <div className="mt-4 flex justify-end gap-3">
               <button
                 onClick={() => handleDownload(viewNote)}
-                className="rounded-xl inline-flex items-center gap-2 border border-white/20 px-4 py-2 hover:border-indigo-300"
+                className="btn-outline"
               >
-                 <Download size={16} /> PDF
+                <Download size={16} /> PDF
               </button>
 
               <button
                 onClick={() => handleShare(viewNote)}
-                className="rounded-xl inline-flex items-center gap-2 border border-white/20 px-4 py-2 hover:border-indigo-300"
+                className="btn-outline"
               >
                 <Share2 size={16} /> Share
               </button>
 
               <button
                 onClick={() => setViewNote(null)}
-                className="rounded-xl inline-flex items-center bg-blue-400 gap-2 border border-white/20 px-4 py-2 hover:border-indigo-300"
+                className="rounded-xl bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-500"
               >
                 Close
               </button>
             </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

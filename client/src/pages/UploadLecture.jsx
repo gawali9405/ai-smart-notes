@@ -238,10 +238,10 @@ const UploadLecture = () => {
     } finally {
       setIsGenerating(false);
     }
-  };
+  };  
 
   return (
-    <div className="space-y-8 text-white">
+    <div className="space-y-8 text-gray-800">
       <SectionTitle
         eyebrow="Upload lecture"
         title="Send your lecture files to the AI lab"
@@ -249,8 +249,8 @@ const UploadLecture = () => {
       />
 
       <form onSubmit={handleGenerate} className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6 rounded-[2.5rem] border border-white/10 bg-white/5 p-6">
-          <p className="text-sm uppercase tracking-[0.3em] text-white/60">
+        <div className="lg:col-span-2 space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <p className="text-sm font-medium uppercase tracking-[0.2em] text-gray-500">
             Upload options
           </p>
           <div className="grid gap-4 md:grid-cols-2">
@@ -259,25 +259,27 @@ const UploadLecture = () => {
                 key={option.id}
                 type="button"
                 onClick={() => handleOptionChange(option.id)}
-                className={`rounded-3xl border p-4 text-left ${
+                className={`rounded-xl border p-4 text-left transition-colors ${
                   activeOption === option.id
-                    ? "border-indigo-400 bg-indigo-500/20"
-                    : "border-white/10 bg-slate-900/40 hover:border-indigo-300"
+                    ? "border-indigo-500 bg-indigo-100 text-indigo-900"
+                    : "border-gray-300 bg-gray-50 hover:border-indigo-300 hover:shadow-sm"
                 }`}
               >
-                <p className="text-xs uppercase tracking-[0.4em] text-white/60">
+                <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-700">
                   {option.label}
                 </p>
-                <p className="mt-2 text-lg font-semibold">
+                <p className="mt-2 text-lg font-semibold text-gray-900">
                   {option.description}
                 </p>
-                <p className="text-sm text-white/60">{option.sampleName}</p>
+                <p className="text-sm text-gray-600">{option.sampleName}</p>
               </button>
             ))}
           </div>
 
-          <div className="space-y-5 rounded-3xl border border-white/10 bg-slate-900/50 p-6">
-            <label className="block text-xs uppercase tracking-[0.4em] text-white/50">
+          <div className="space-y-5 rounded-xl border border-gray-300 bg-gray-50 p-6 shadow-sm">
+            <label
+              className="block text-xs font-medium uppercase tracking-[0.2em] text-gray-700"
+            >
               Lecture title (optional)
             </label>
             <input
@@ -286,7 +288,7 @@ const UploadLecture = () => {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="E.g. Week 4 – Quantum Mechanics"
               maxLength={120}
-              className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white placeholder-white/40 focus:border-indigo-300 focus:outline-none"
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-800 placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
             />
 
             {["document", "video"].includes(activeOption) && (
@@ -299,11 +301,11 @@ const UploadLecture = () => {
                 onDrop={handleDrop}
                 className={`rounded-3xl border-2 border-dashed p-6 text-center transition ${
                   isDragging
-                    ? "border-indigo-400 bg-indigo-500/10"
-                    : "border-white/20 bg-slate-900/40"
+                    ? "border-indigo-400 bg-indigo-50"
+                    : "border-gray-200 bg-gray-50"
                 }`}
               >
-                <UploadCloud className="mx-auto text-indigo-200" size={36} />
+                <UploadCloud className="mx-auto text-indigo-400" size={36} />
                 <p className="mt-3 text-lg font-semibold">
                   {file
                     ? "File ready to upload"
@@ -318,7 +320,7 @@ const UploadLecture = () => {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="rounded-full border border-white/15 px-6 py-2 text-sm font-semibold text-white hover:border-indigo-300"
+                    className="rounded-full border border-gray-300 bg-white px-6 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                   >
                     Browse files
                   </button>
@@ -326,7 +328,7 @@ const UploadLecture = () => {
                     <button
                       type="button"
                       onClick={resetFileInput}
-                      className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-white"
+                      className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700"
                     >
                       <X size={14} />
                       Remove
@@ -342,22 +344,22 @@ const UploadLecture = () => {
                 />
 
                 {file && (
-                  <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-left text-sm">
+                  <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left text-sm">
                     <p className="font-semibold">{file.name}</p>
-                    <p className="text-white/60">
+                    <p className="text-gray-500">
                       {(file.size / (1024 * 1024)).toFixed(2)} MB
                     </p>
                   </div>
                 )}
                 {errors.file && (
-                  <p className="mt-3 text-sm text-rose-300">{errors.file}</p>
+                  <p className="mt-3 text-sm text-red-600">{errors.file}</p>
                 )}
               </div>
             )}
 
             {activeOption === "text" && (
               <div>
-                <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-white/50">
+                <div className="flex items-center justify-between text-xs font-medium uppercase tracking-[0.2em] text-gray-500">
                   <span>Paste transcript</span>
                   <span className="text-white/40">
                     {textInput.length}/{MAX_TEXT_LENGTH}
@@ -370,17 +372,17 @@ const UploadLecture = () => {
                   }
                   rows={6}
                   placeholder="Drop your transcript, bullet outline, or raw lecture notes here..."
-                  className="mt-3 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white placeholder-white/40 focus:border-indigo-300 focus:outline-none"
+                  className="mt-3 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
                 />
                 {errors.text && (
-                  <p className="mt-2 text-sm text-rose-300">{errors.text}</p>
+                  <p className="mt-2 text-sm text-red-600">{errors.text}</p>
                 )}
               </div>
             )}
 
             {activeOption === "youtube" && (
               <div>
-                <label className="flex items-center gap-2 text-xs uppercase tracking-[0.4em] text-white/50">
+                <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">
                   <Link2 size={14} />
                   YouTube link
                 </label>
@@ -389,13 +391,13 @@ const UploadLecture = () => {
                   value={youtubeUrl}
                   onChange={(e) => setYoutubeUrl(e.target.value)}
                   placeholder="https://youtu.be/abcdef12345"
-                  className="mt-3 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white placeholder-white/40 focus:border-indigo-300 focus:outline-none"
+                  className="mt-3 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-800 placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
                 />
-                <p className="mt-2 text-xs text-white/50">
+                <p className="mt-2 text-xs text-gray-500">
                   Supports public or unlisted videos.
                 </p>
                 {errors.youtubeUrl && (
-                  <p className="mt-2 text-sm text-rose-300">
+                  <p className="mt-2 text-sm text-red-600">
                     {errors.youtubeUrl}
                   </p>
                 )}
@@ -404,7 +406,7 @@ const UploadLecture = () => {
           </div>
         </div>
 
-        <div className="space-y-6 rounded-[2.5rem] border border-white/10 bg-white/5 p-6">
+        <div className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           <div>
             <p className="text-xs uppercase tracking-[0.4em] text-white/50">
               Language
@@ -412,7 +414,7 @@ const UploadLecture = () => {
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
-              className="mt-3 w-full rounded-2xl border border-white/10 bg-slate-900/50 px-4 py-3 text-white focus:border-indigo-300 focus:outline-none"
+              className="mt-3 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
             >
               {languages.map((lang) => (
                 <option
@@ -434,10 +436,10 @@ const UploadLecture = () => {
               {summaryTypes.map((type) => (
                 <label
                   key={type}
-                  className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold ${
+                  className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
                     summaryType === type
-                      ? "border-indigo-400 bg-indigo-500/20"
-                      : "border-white/10 bg-slate-900/50 hover:border-indigo-300"
+                      ? "border-indigo-500 bg-indigo-50"
+                      : "border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm"
                   }`}
                 >
                   <input
@@ -445,7 +447,7 @@ const UploadLecture = () => {
                     name="summaryType"
                     checked={summaryType === type}
                     onChange={() => setSummaryType(type)}
-                    className="accent-indigo-400"
+                    className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
                   />
                   {SUMMARY_LABELS[type] || type}
                 </label>
@@ -453,11 +455,11 @@ const UploadLecture = () => {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-slate-900/50 p-5">
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
             <p className="text-xs uppercase tracking-[0.4em] text-white/50">
               Status
             </p>
-            <p className="mt-2 text-lg font-semibold text-white">
+            <p className="mt-2 text-lg font-semibold text-gray-900">
               {isGenerating ? "Processing…" : "Queue ready"}
             </p>
             <p className="text-sm text-white/60">
@@ -473,7 +475,7 @@ const UploadLecture = () => {
               ].map((item) => (
                 <div
                   key={item}
-                  className="flex items-center gap-2 text-emerald-300"
+                  className="flex items-center gap-2 text-emerald-600"
                 >
                   <RadioTower size={14} />
                   {item}
@@ -484,7 +486,7 @@ const UploadLecture = () => {
 
           <button
             type="submit"
-            className="w-full rounded-2xl bg-white px-6 py-3 text-base font-semibold text-slate-900 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
+            className="w-full rounded-lg bg-indigo-600 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
             disabled={isGenerating}
           >
             {isGenerating ? (
@@ -500,16 +502,16 @@ const UploadLecture = () => {
       </form>
       <div className="mt-6">
         {generatedNote && (
-          <div className="rounded-3xl border border-white/10 bg-slate-900/50 p-6">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2 text-emerald-300">
+              <div className="flex items-center gap-2 text-emerald-600">
                 <CheckCircle2 size={18} />
                 <span>Notes generated successfully</span>
               </div>
               <button
                 onClick={handleSaveNotes}
                 disabled={isSaving}
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-500 rounded hover:bg-emerald-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSaving ? (
                   <>
@@ -525,8 +527,8 @@ const UploadLecture = () => {
             {/* ✅ wrapper gets className */}
             <div className="space-y-6">
               {generatedNote.content && (
-                <div className="prose prose-invert max-w-none">
-                  <h3 className="text-xl font-bold mb-4">Notes</h3>
+                <div className="prose max-w-none">
+                  <h3 className="mb-4 text-xl font-bold text-gray-900">Notes</h3>
                   <ReactMarkdown>{generatedNote.content}</ReactMarkdown>
                 </div>
               )}
@@ -534,10 +536,10 @@ const UploadLecture = () => {
               {generatedNote.keyPoints &&
                 generatedNote.keyPoints.length > 0 && (
                   <div className="mt-6">
-                    <h3 className="text-xl font-bold mb-4">Key Points</h3>
+                    <h3 className="mb-4 text-xl font-bold text-gray-900">Key Points</h3>
                     <ul className="list-disc pl-6 space-y-2">
                       {generatedNote.keyPoints.map((point, index) => (
-                        <li key={index} className="text-white/90">
+                        <li key={index} className="text-gray-700">
                           {point}
                         </li>
                       ))}
@@ -548,14 +550,14 @@ const UploadLecture = () => {
               {generatedNote.highlights &&
                 generatedNote.highlights.length > 0 && (
                   <div className="mt-6">
-                    <h3 className="text-xl font-bold mb-4">Highlights</h3>
+                    <h3 className="mb-4 text-xl font-bold text-gray-900">Highlights</h3>
                     <div className="grid gap-3">
                       {generatedNote.highlights.map((highlight, index) => (
                         <div
                           key={index}
-                          className="bg-blue-900/30 border-l-4 border-blue-400 p-4 rounded-r"
+                          className="border-l-4 border-blue-400 bg-blue-50 p-4 rounded-r"
                         >
-                          <p className="text-white/90">{highlight}</p>
+                          <p className="text-gray-700">{highlight}</p>
                         </div>
                       ))}
                     </div>

@@ -8,10 +8,10 @@ const ProtectedRoute = () => {
 
   if (loading) {
     return (
-      <div className="grid min-h-screen place-items-center bg-slate-950 text-white">
+      <div className="grid min-h-screen place-items-center bg-white text-gray-900">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent"></div>
-          <p className="text-lg font-semibold tracking-[0.3em] text-indigo-300">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+          <p className="text-lg font-semibold tracking-[0.2em] text-gray-700">
             Loading...
           </p>
         </div>

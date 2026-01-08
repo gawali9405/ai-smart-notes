@@ -71,7 +71,7 @@ export const progressStats = [
   },
   {
     id: "lectures",
-    label: "Lectures Summarized",
+    label: "Lectures Notes",
     value: "42",
     change: "+6 new uploads",
   },
@@ -81,7 +81,26 @@ export const progressStats = [
     value: "310",
     change: "+42 auto Q&A",
   },
+  {
+    id: "flashcards",
+    label: "Flashcards Created",
+    value: "245",
+    change: "+35 this week",
+  },
+  {
+    id: "activeUsers",
+    label: "Active Users",
+    value: "87",
+    change: "+12 new learners",
+  },
+  {
+    id: "communityNotes",
+    label: "Community Notes",
+    value: "58",
+    change: "+8 shared",
+  },
 ];
+
 
 export const uploadOptions = [
   {
