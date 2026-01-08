@@ -5,7 +5,7 @@ import Sidebar from "./Sidebar";
 import DarkModeToggle from "./DarkModeToggle";
 import MobileNav from "./MobileNav";
 import { navItems } from "../data/mockData";
-import api from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
 
 const DashboardLayout = ({ isDark, onToggleTheme }) => {
@@ -24,29 +24,20 @@ const DashboardLayout = ({ isDark, onToggleTheme }) => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  const { logout } = useAuth();
+
   const handleLogout = async () => {
     try {
-      await api.post("/auth/logout");
-
-      // remove token
-      localStorage.removeItem("token");
-
+      await logout();
       setOpen(false);
-      navigate("/login");
       toast.success("Logged out successfully");
     } catch (error) {
-      toast.error("Logout failed");
+      toast.error(error.message || "Logout failed");
     }
   };
 
   return (
-    <div
-      className={`flex min-h-screen bg-gradient-to-br ${
-        isDark
-          ? "from-slate-950 via-slate-900 to-indigo-950 text-slate-100"
-          : "from-slate-50 via-white to-indigo-50 text-slate-900"
-      } transition-colors duration-500`}
-    >
+    <div className="flex min-h-screen bg-transparent transition-colors duration-500">
       <Sidebar items={navItems} />
 
       <section className="flex-1 px-4 py-6 sm:px-8">

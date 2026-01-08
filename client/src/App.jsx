@@ -28,26 +28,34 @@ const App = () => {
         <Routes>
           <Route
             path="/"
-            element={<Landing isDark={isDark} onToggleTheme={() => setIsDark((prev) => !prev)} />}
+            element={
+              <Landing
+                isDark={isDark}
+                onToggleTheme={() => setIsDark((prev) => !prev)}
+              />
+            }
           />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          <Route
-            element={
-              <ProtectedRoute>
-                <DashboardLayout isDark={isDark} onToggleTheme={() => setIsDark((prev) => !prev)} />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/upload" element={<UploadLecture />} />
-            <Route path="/slides" element={<SlideToNotes />} />
-            <Route path="/qa" element={<QAGenerator />} />
-            <Route path="/community" element={<CommunityNotes />} />
-            <Route path="/my-notes" element={<MyNotes />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/profile" element={<Profile />} />
+          <Route element={<ProtectedRoute />}>
+            <Route
+              element={
+                <DashboardLayout
+                  isDark={isDark}
+                  onToggleTheme={() => setIsDark((prev) => !prev)}
+                />
+              }
+            >
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/upload" element={<UploadLecture />} />
+              <Route path="/slides" element={<SlideToNotes />} />
+              <Route path="/qa" element={<QAGenerator />} />
+              <Route path="/community" element={<CommunityNotes />} />
+              <Route path="/my-notes" element={<MyNotes />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/profile" element={<Profile />} />
+            </Route>
           </Route>
         </Routes>
       </AuthProvider>

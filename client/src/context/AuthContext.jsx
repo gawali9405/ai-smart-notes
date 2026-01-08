@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../lib/api";
 import React from "react";
 
-const AuthContext = createContext(null);
+export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -48,10 +48,20 @@ export const AuthProvider = ({ children }) => {
     return api.post("/auth/register", payload); 
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
-    navigate("/login");
+  const logout = async () => {
+    try {
+      // Call the logout API endpoint
+      await api.post('/auth/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Continue with local logout even if API call fails
+    } finally {
+      // Clear local state
+      localStorage.removeItem("token");
+      setUser(null);
+      // Redirect to login page
+      navigate("/login");
+    }
   };
 
   // Initialize auth state on mount

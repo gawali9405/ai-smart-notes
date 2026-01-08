@@ -1,13 +1,12 @@
-import React from "react";
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Lock, Mail, ShieldCheck, Sparkles } from "lucide-react";
 import DarkModeToggle from "../components/DarkModeToggle";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-hot-toast";
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
@@ -15,8 +14,14 @@ const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const navigate = useNavigate();
-  const searchParams = new URLSearchParams(window.location.search);
-  const redirectTo = searchParams.get('redirect') || '/dashboard';
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || "/dashboard";
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -34,17 +39,11 @@ const Login = () => {
 
     try {
       setIsSubmitting(true);
-
-      await login({
-        email: form.email,
-        password: form.password,
-      });
-
+      await login(form);
       toast.success("Login successful 🎉");
-      navigate(redirectTo);
+      navigate(redirectTo, { replace: true });
     } catch (error) {
       toast.error(error.response?.data?.message || "Invalid credentials");
-      console.error("Login error:", error);
     } finally {
       setIsSubmitting(false);
     }

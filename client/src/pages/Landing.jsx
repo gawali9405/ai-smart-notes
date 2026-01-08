@@ -1,5 +1,6 @@
-import { Link } from "react-router-dom";
-import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import React, { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 import {
   ArrowRight,
   CheckCircle2,
@@ -16,23 +17,36 @@ import IconBadge from "../components/IconBadge";
 import { featureCards } from "../data/mockData";
 
 const Landing = ({ isDark, onToggleTheme }) => {
+  const { isAuthenticated } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const handleUploadClick = (e) => {
+    if (!isAuthenticated) {
+      e.preventDefault();
+      navigate('/login', { state: { from: '/upload' } });
+    }
+  };
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white">
+    <div className="min-h-screen">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-        <Link to="/" className="flex items-center gap-3 text-white">
-          <span className="inline-flex size-12 items-center justify-center rounded-2xl bg-white/10 text-indigo-300">
+        <Link to="/" className="flex items-center gap-3 text-indigo-100">
+          <span className="inline-flex size-12 items-center justify-center rounded-2xl bg-indigo-500/20 text-indigo-200">
             <Sparkles />
           </span>
           <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-white/60">
+            <p className="text-xs uppercase tracking-[0.4em] text-indigo-200/80">
               SmartGenius
             </p>
-            <h1 className="text-xl font-semibold">AI Lecture Lab</h1>
+            <h1 className="text-xl font-semibold text-white">AI Lecture Lab</h1>
           </div>
         </Link>
-        <nav className="hidden gap-6 text-sm text-white/70 md:flex">
+        <nav className="hidden gap-6 text-sm text-indigo-100/80 md:flex">
           {["Features", "Workflow", "Community"].map((item) => (
-            <a key={item} href={`#${item.toLowerCase()}`} className="hover:text-white">
+            <a 
+              key={item} 
+              href={`#${item.toLowerCase()}`} 
+              className="transition-colors hover:text-white"
+            >
               {item}
             </a>
           ))}
@@ -77,7 +91,8 @@ const Landing = ({ isDark, onToggleTheme }) => {
                 <ArrowRight className="transition group-hover:translate-x-1" size={18} />
               </Link>
               <Link
-                to="/upload"
+                to={isAuthenticated ? "/upload" : "#"}
+                onClick={handleUploadClick}
                 className="inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white hover:border-indigo-300"
               >
                 Upload Lecture
@@ -132,11 +147,6 @@ const Landing = ({ isDark, onToggleTheme }) => {
                   </p>
                 </div>
               </div>
-            </div>
-            <div className="absolute -bottom-12 left-1/2 w-64 -translate-x-1/2 rounded-3xl border border-white/10 bg-indigo-500/20 p-4 text-center shadow-2xl shadow-indigo-900/60">
-              <p className="text-xs uppercase tracking-[0.4em] text-white/60">Learners online</p>
-              <p className="mt-2 text-3xl font-semibold">1,204</p>
-              <p className="text-sm text-white/70">syncing summaries in real time</p>
             </div>
           </div>
         </section>
@@ -274,7 +284,8 @@ const Landing = ({ isDark, onToggleTheme }) => {
             </div>
             <div className="flex gap-4">
               <Link
-                to="/upload"
+                to={isAuthenticated ? "/upload" : "#"}
+                onClick={handleUploadClick}
                 className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
               >
                 Upload lecture
@@ -291,7 +302,7 @@ const Landing = ({ isDark, onToggleTheme }) => {
       </main>
 
       <footer className="border-t border-white/10 py-6 text-center text-sm text-white/60">
-        © {new Date().getFullYear()} Smart Notes Generator · Designed for campus productivity
+        © {new Date().getFullYear()} Smart Notes Generator · 
       </footer>
     </div>
   );

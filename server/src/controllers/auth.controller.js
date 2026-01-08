@@ -84,6 +84,7 @@ export const login = asyncHandler(async (req, res) => {
 
 export const logout = asyncHandler(async (req, res) => {
   successResponse(res, {
+    success: true,
     message: "Logout successful",
   });
 });
