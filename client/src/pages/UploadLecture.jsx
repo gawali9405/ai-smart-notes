@@ -456,13 +456,13 @@ const UploadLecture = () => {
           </div>
 
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
-            <p className="text-xs uppercase tracking-[0.4em] text-white/50">
+            <p className="text-xs uppercase tracking-[0.4em] text-blue-900 font-bold">
               Status
             </p>
             <p className="mt-2 text-lg font-semibold text-gray-900">
               {isGenerating ? "Processing…" : "Queue ready"}
             </p>
-            <p className="text-sm text-white/60">
+            <p className="text-sm text-gray-600">
               {isGenerating
                 ? "Extracting content and generating notes"
                 : "Average completion: 2 mins"}
